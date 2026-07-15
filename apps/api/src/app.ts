@@ -5,6 +5,7 @@ import { PromptRouter } from './routes/PromptRouter';
 import { AssetRouter } from './routes/AssetRouter';
 import { GenerationRouter } from './routes/GenerationRouter';
 import { IntegrationRouter } from './routes/IntegrationRouter';
+import { PluginsRouter } from './routes/PluginsRouter';
 import { bootstrapContainer } from './container';
 import { errorHandler } from './errors';
 
@@ -16,6 +17,7 @@ app.use('/prompts', PromptRouter);
 app.use('/assets', AssetRouter);
 app.use('/generations', GenerationRouter);
 app.use('/integrations', IntegrationRouter);
+app.use('/plugins', PluginsRouter);
 app.use(errorHandler);
 
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
