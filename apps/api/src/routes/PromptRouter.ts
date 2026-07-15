@@ -5,6 +5,11 @@ import { container } from '../container';
 
 const router = Router();
 
+router.get('/', async (req, res) => {
+  const list = container.resolve<ListPrompts>('ListPrompts');
+  const prompts = await list.execute(req.query.projectId as string);
+  res.json(prompts);
+});
 router.get('/projects/:projectId', async (req, res) => {
   const list = container.resolve<ListPrompts>('ListPrompts');
   const prompts = await list.execute(req.params.projectId);

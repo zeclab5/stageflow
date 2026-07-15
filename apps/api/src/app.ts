@@ -6,7 +6,6 @@ import { AssetRouter } from './routes/AssetRouter';
 import { GenerationRouter } from './routes/GenerationRouter';
 import { IntegrationRouter } from './routes/IntegrationRouter';
 import { bootstrapContainer } from './container';
-import { config } from './config';
 
 const app = express();
 app.use(express.json());
@@ -17,12 +16,10 @@ app.use('/assets', AssetRouter);
 app.use('/generations', GenerationRouter);
 app.use('/integrations', IntegrationRouter);
 
-const port = config.port;
+const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 bootstrapContainer()
   .then(() => {
-    app.listen(port, () => {
-      console.log(`API listening on http://localhost:${port}`);
-    });
+    app.listen(port, () => console.log(`API listening on http://localhost:${port}`));
   })
   .catch(err => {
     console.error('bootstrap failed', err);
