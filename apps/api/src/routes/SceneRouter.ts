@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import type { CreateScene, RenameScene, ReorderScene } from '@core/application/command/SceneCommand';
-import type { ListScenes } from '@core/application/query/SceneQuery';
+import type { CreateScene, RenameScene, ReorderScene } from 'stageflow-core';
+import type { ListScenes } from 'stageflow-core';
 import { container } from '../container';
 
 const router = Router();

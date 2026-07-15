@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import type { RegisterAsset, RetireAsset } from '@core/application/command/AssetCommand';
-import type { ListAssets } from '@core/application/query/AssetQuery';
+import type { RegisterAsset, RetireAsset } from 'stageflow-core';
+import type { ListAssets } from 'stageflow-core';
 import { container } from '../container';
 
 const router = Router();

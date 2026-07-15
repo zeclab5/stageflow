@@ -1,17 +1,18 @@
-import { DIContainer } from '@core/infrastructure/di/Container';
-import { SQLiteProjectRepository } from '@core/infrastructure/repository/SQLiteProjectRepository';
-import { SQLiteSceneRepository } from '@core/infrastructure/repository/SQLiteSceneRepository';
-import { SQLitePromptRepository } from '@core/infrastructure/repository/SQLitePromptRepository';
-import { SQLiteAssetRepository } from '@core/infrastructure/repository/SQLiteAssetRepository';
-import { SQLiteGenerationJobRepository } from '@core/infrastructure/repository/SQLiteGenerationJobRepository';
-import { SQLiteIntegrationRepository } from '@core/infrastructure/repository/SQLiteIntegrationRepository';
-import { SQLiteConnection } from '@core/infrastructure/persistence/sqlite/SQLiteConnection';
-import { initializeDatabase } from '@core/infrastructure/persistence/sqlite/SQLiteProvider';
+import { DIContainer } from 'stageflow-core';
+import { SQLiteProjectRepository } from 'stageflow-core';
+import { SQLiteSceneRepository } from 'stageflow-core';
+import { SQLitePromptRepository } from 'stageflow-core';
+import { SQLiteAssetRepository } from 'stageflow-core';
+import { SQLiteGenerationJobRepository } from 'stageflow-core';
+import { SQLiteIntegrationRepository } from 'stageflow-core';
+import { SQLiteConnection } from 'stageflow-core';
+import { initializeDatabase } from 'stageflow-core';
+import { config } from './config';
 
 export const container = new DIContainer();
 
 export async function bootstrap() {
-  const db = await initializeDatabase('/tmp/stageflow-api.sqlite');
+  const db = await initializeDatabase(config.dbPath);
   container.register<SQLiteConnection>('db', () => db);
 
   container.register<SQLiteProjectRepository>('projectRepo', () => new SQLiteProjectRepository(db));

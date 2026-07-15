@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import type { CreateGenerationJob, UpdateGenerationStatus, AttachGenerationOutput } from '@core/application/command/GenerationCommand';
-import type { GetGeneration, ListGenerations } from '@core/application/query/GenerationQuery';
+import type { CreateGenerationJob, UpdateGenerationStatus, AttachGenerationOutput } from 'stageflow-core';
+import type { GetGeneration, ListGenerations } from 'stageflow-core';
 import { container } from '../container';
 
 const router = Router();

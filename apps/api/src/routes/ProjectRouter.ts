@@ -1,16 +1,23 @@
 import { Router } from 'express';
-import type { CreateProject } from '@core/application/command/CreateProject';
-import type { UpdateProject } from '@core/application/command/UpdateProject';
-import type { CloseProject } from '@core/application/command/CloseProject';
-import type { GetProject } from '@core/application/query/GetProject';
-import type { ListProjects } from '@core/application/query/ListProjects';
+import type { CreateProject } from 'stageflow-core';
+import type { UpdateProject } from 'stageflow-core';
+import type { CloseProject } from 'stageflow-core';
+import type { GetProject } from 'stageflow-core';
+import type { ListProjects, ProjectFilter } from 'stageflow-core';
 import { container } from '../container';
 
 const router = Router();
 
-router.get('/', async (_req, res) => {
+router.get('/', async (req, res) => {
   const list = container.resolve<ListProjects>('ListProjects');
-  const projects = await list.execute();
+  const filter: ProjectFilter = {};
+  if (typeof req.query.status === 'string') {
+    filter.status = req.query.status as ProjectFilter['status'];
+  }
+  if (typeof req.query.nameContains === 'string') {
+    filter.nameContains = req.query.nameContains;
+  }
+  const projects = await list.execute(filter);
   res.json(projects);
 });
 

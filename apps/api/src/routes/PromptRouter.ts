@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import type { CreatePrompt, UpdatePromptTemplate } from '@core/application/command/PromptCommand';
-import type { ListPrompts } from '@core/application/query/PromptQuery';
+import type { CreatePrompt, UpdatePromptTemplate } from 'stageflow-core';
+import type { ListPrompts } from 'stageflow-core';
 import { container } from '../container';
 
 const router = Router();

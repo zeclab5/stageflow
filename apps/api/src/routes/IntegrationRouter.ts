@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import type { CreateIntegrationProfile, ActivateIntegration, SuspendIntegration } from '@core/application/command/IntegrationCommand';
-import type { GetIntegration, ListIntegrations } from '@core/application/query/IntegrationQuery';
+import type { CreateIntegrationProfile, ActivateIntegration, SuspendIntegration } from 'stageflow-core';
+import type { GetIntegration, ListIntegrations } from 'stageflow-core';
 import { container } from '../container';
 
 const router = Router();
