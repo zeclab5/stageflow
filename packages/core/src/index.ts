@@ -5,6 +5,8 @@ export { Asset, AssetId, AssetType } from './domain/asset/Asset';
 export { GenerationJob, JobId, JobStatus } from './domain/generation/GenerationJob';
 export { IntegrationProfile, IntegrationId, ConnectionStatus } from './domain/integration/IntegrationProfile';
 export { Plugin } from './plugin/Plugin';
+export { PluginRegistry, PluginDescriptor, PluginManifest, PluginLoadError } from './plugin';
+export type { PluginConfig, PluginRegistryHooks } from './plugin';
 
 export { ProjectRepository, ProjectFilter } from './domain/project/ProjectRepository';
 export { SceneRepository, SceneId } from './domain/scene/SceneRepository';
