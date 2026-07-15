@@ -1,6 +1,6 @@
 # SPEC-200 : Domain
 
-Version: 0.1
+Version: 0.2
 Status: Approved
 Date: 2026-07-15
 
@@ -28,38 +28,45 @@ StageFlow의 핵심 도메인 모델, Aggregate, Entity, Value Object, Domain Ev
 ## Project
 
 - Entity: Project
-- Value Object: ProjectMetadata, ProjectStatus
-- Event: ProjectCreated, ProjectUpdated
+- State: draft, active, closed
+- Command: CreateProject, UpdateProject, CloseProject
+- Query: GetProject, ListProjects
 
 ## Scene
 
 - Entity: Scene
-- Value Object: Timeline, Trigger
-- Event: SceneCreated, SceneOrderChanged
+- State: name, order, projectId
+- Command: CreateScene, RenameScene, ReorderScene
+- Query: ListScenes
 
 ## Prompt
 
 - Entity: Prompt
-- Value Object: PromptTemplate, PromptVariableMap
-- Event: PromptCreated, PromptVersionUpdated
+- State: template, version
+- Command: CreatePrompt, UpdatePromptTemplate
+- Query: ListPrompts
 
 ## Asset
 
 - Entity: Asset
-- Value Object: AssetType, AssetMetadata
-- Event: AssetRegistered, AssetTagUpdated
+- Value: AssetType(image, video, audio, text)
+- State: uri, status
+- Command: RegisterAsset, RetireAsset
+- Query: ListAssets
 
-## Generation
+## GenerationJob
 
 - Entity: GenerationJob
-- Value Object: GenerationResult, GenerationProviderRef
-- Event: GenerationRequested, GenerationCompleted, GenerationFailed
+- State: provider, params, status(requested, completed, failed), output, sceneId, promptId
+- Command: CreateGenerationJob, UpdateGenerationStatus, AttachGenerationOutput
+- Query: GetGeneration, ListGenerations
 
-## Integration
+## IntegrationProfile
 
 - Entity: IntegrationProfile
-- Value Object: PluginConfig, ConnectionStatus
-- Event: IntegrationConnected, IntegrationDisconnected
+- State: name, type, config, status(draft, active, suspended)
+- Command: CreateIntegrationProfile, ActivateIntegration, SuspendIntegration
+- Query: GetIntegration, ListIntegrations
 
 ---
 
@@ -67,7 +74,8 @@ StageFlow의 핵심 도메인 모델, Aggregate, Entity, Value Object, Domain Ev
 
 - 모든 상태 변경은 Domain Event로 표현한다.
 - 외부 데이터는 Repository를 통해만 접근한다.
-- 비즈니스 규칙은 Domain Service에 위치한다.
+- 비즈니스 규칙은 Domain/Application Service에 위치한다.
+- 모든 외부 연동은 Plugin을 통해야 한다.
 
 ---
 

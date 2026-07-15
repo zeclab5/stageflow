@@ -1,6 +1,6 @@
 # SPEC-300 : Architecture
 
-Version: 0.1
+Version: 0.2
 Status: Approved
 Date: 2026-07-15
 
@@ -8,7 +8,7 @@ Date: 2026-07-15
 
 # 목표
 
-StageFlow의 아키텍처를 Hexagonal Architecture + DDD + Event Driven + Plugin Architecture로 정립한다.
+StageFlow의 아키텍처를 Hexagonal Architecture + DDD + Event Driven + Plugin Architecture로 정식 정의한다.
 
 ---
 
@@ -35,7 +35,7 @@ StageFlow의 아키텍처를 Hexagonal Architecture + DDD + Event Driven + Plugi
 
 - Command
 - Query
-- Event Handler
+- Service
 - Orchestrator
 
 ## Infrastructure Layer
@@ -43,14 +43,20 @@ StageFlow의 아키텍처를 Hexagonal Architecture + DDD + Event Driven + Plugi
 - Repository Implementation
 - Event Bus
 - Persistence
-- External Communication
+- DI Container
+
+## API Layer
+
+- Express Router
+- Validation
+- Error Handling
 
 ## Plugin Layer
 
 - Plugin Interface
 - Plugin Loader
-- Plugin Configuration
-- Plugin Execution
+- Plugin Registry
+- Plugin Descriptor
 
 ---
 
@@ -58,22 +64,23 @@ StageFlow의 아키텍처를 Hexagonal Architecture + DDD + Event Driven + Plugi
 
 - Domain Event만 발행한다.
 - 핸들러는 Application 레이어에 배치한다.
-- 외부 시스템과의 직접 호출은 허용하지 않는다.
+- InMemoryEventBus를 기본 구현으로 사용한다.
 
 ---
 
 # 플러그인 정책
 
 - 모든 외부 프로그램은 Plugin으로만 연결한다.
-- Plugin은 Interface를 구현해야 한다.
-- 플러그인 설정 변경은 Config로만 처리한다.
+- Plugin은 Plugin 인터페이스를 구현해야 한다.
+- 플러그인 설정 변경은 PluginConfig로만 처리한다.
+- PluginRegistry로 descriptor/load/shutdown을 관리한다.
 
 ---
 
 # API 정책
 
 - API First
-- 외부 공개 API와 내부 API를 분리한다.
+- REST 컨벤션을 기본으로 한다.
 - 모든 모듈은 인터페이스 기반으로 교체 가능하게 설계한다.
 
 ---
@@ -90,7 +97,7 @@ StageFlow의 아키텍처를 Hexagonal Architecture + DDD + Event Driven + Plugi
 
 - 모든 비즈니스 상태는 Aggregate Root에서 관리한다.
 - Repository를 통해서만 데이터에 접근한다.
-- 직접 DB 접근을 허용하지 않는다.
+- 직접 DB 접근 코드는 Infrastructure 레이어에 제한한다.
 
 ---
 

@@ -1,6 +1,6 @@
 # SPEC-100 : Product
 
-Version: 0.1
+Version: 0.2
 Status: Approved
 Date: 2026-07-15
 
@@ -8,7 +8,7 @@ Date: 2026-07-15
 
 # 목표
 
-StageFlow의 제품 기능 범위, 사용자 흐름, 경계를 정의한다.
+StageFlow의 제품 기능 범위, 사용자 흐름, 경계를 정의한다. 구현 범위는 MVP로 제한한다.
 
 ---
 
@@ -19,7 +19,7 @@ StageFlow의 제품 기능 범위, 사용자 흐름, 경계를 정의한다.
 3. Prompt Management
 4. Asset Management
 5. AI Generation
-6. Resolume Integration
+6. Integration
 
 ---
 
@@ -27,57 +27,54 @@ StageFlow의 제품 기능 범위, 사용자 흐름, 경계를 정의한다.
 
 ## Project Management
 
-- 프로젝트 생성, 수정, 삭제
+- 프로젝트 생성, 조회, 수정, 종료
 - 프로젝트 상태 관리
-- 메타데이터 관리
+- 프로젝트 메타데이터 관리
 
 ## Scene Management
 
-- 씬 생성, 수정, 삭제
-- 씬 순서 관리
-- 시간라인 / 트리거 관리
+- 프로젝트별 씬 생성, 조회, 이름 변경, 순서 변경
+- 씬은 프로젝트에 종속된다.
 
 ## Prompt Management
 
-- 프롬프트 생성, 수정, 삭제
-- 프롬프트 버전 관리
-- 변수화된 프롬프트 템플릿
+- 프로젝트별 프롬프트 생성, 조회, 템플릿 수정
+- 프롬프트 템플릿과 버전 관리
 
 ## Asset Management
 
-- 이미지, 영상, 오디오, 텍스트 등록
-- 태그 / 메타정보 관리
-- 사용 이력 추적
+- 프로젝트별 에셋 등록, 조회, 회수
+- 에셋 유형: image, video, audio, text
 
 ## AI Generation
 
-- 텍스트 to image
-- 텍스트 to audio
-- 스타일 변환 / 보간
-- AI Provider 독립적 구조
+- 제너레이션 잡 생성, 상태 변경, 출력 연결
+- 제너레이션은 프로젝트/씬/프롬프트와 연결 가능
+- 상태: requested, completed, failed
 
-## Resolume Integration
+## Integration
 
-- Resolume 연동은 Plugin으로만 처리
-- 재생 제어
-- 프리셷 동기화
+- Integration 생성, 조회, 활성화, 정지
+- 통합 프로필은 범용 외부 시스템 연결 지점이다.
+- 모든 외부 프로그램은 Plugin으로 연결한다.
 
 ---
 
 # 사용자 역할
 
-- Founder : 최종 의사결정
-- CTO : 아키텍처 / Specification / Review
-- Lead Developer : Implementation / Refactoring / Testing
-- Automation / Agent / Tool / Local Workflow
+- Founder: 최종 의사결정
+- CTO: Architecture / Specification / Review
+- Lead Developer: Implementation / Refactoring / Testing
+- Automation / Agent / Tool / Local Workflow: 자동화 보조
 
 ---
 
 # 제약
 
 - 기존 프로그램을 대체하는 것이 아니다.
-- 연결(Integration)이 핵심이다.
+- 연결이 핵심이다.
 - 외부 프로그램은 Plugin으로만 연결한다.
+- AI 기능은 Provider 독립 구조로 구현한다.
 
 ---
 
