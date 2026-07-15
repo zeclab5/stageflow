@@ -1,6 +1,6 @@
 # SPEC-400 : Database
 
-Version: 0.1
+Version: 0.2
 Status: Approved
 Date: 2026-07-15
 
@@ -24,6 +24,16 @@ StageFlow의 데이터 저장 구조, 관계, 규칙을 정의한다.
 
 - 이벤트 소싱을 기본 정책으로 고려하되, MVP에서는 상태 저장 우선으로 시작한다.
 - 감사 로그는 Domain Event로부터 재구성 가능하게 설계한다.
+
+---
+
+# 데이터베이스 (RFC-001)
+
+- MVP persistence는 SQLite로 한다 (RFC-001 Approved).
+- SQLite 접근은 Connection / Provider / Repository 계층으로 분리한다.
+- SQLite 종속 코드는 Infrastructure 레이어에만 위치한다. 도메인/애플리케이션 레이어로 누출을 금지한다.
+- 스키마 변경은 마이그레이션 스크립트로 관리한다.
+- 스케일링이 필요한 시점의 이관 1순위는 PostgreSQL이며, 이관은 별도 RFC로 진행한다.
 
 ---
 
@@ -53,3 +63,4 @@ StageFlow의 데이터 저장 구조, 관계, 규칙을 정의한다.
 # 변경 이력
 
 2026-07-15 : 초기 생성
+2026-07-15 : RFC-001 승인 반영, MVP persistence SQLite 확정 (Version 0.2)
