@@ -27,9 +27,9 @@ const layout = (title: string, body: string) => `<!doctype html>
       <h1>StageFlow</h1>
       <nav>
         <a href="/">Home</a>
-        <a href="/works">Works</a>
-        <a href="/blog">Blog</a>
-        <a href="/plugins">Plugins</a>
+        <a href="/api/works">Works</a>
+        <a href="/api/blog">Blog</a>
+        <a href="/api/plugins">Plugins</a>
       </nav>
     </header>
     <main>${body}</main>
