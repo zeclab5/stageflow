@@ -1,5 +1,10 @@
 # StageFlow AI Master Development Plan v1.0
 
+> 문서 성격: 5년 장기 제품 비전 로드맵 (Post-MVP Product Rollout).
+> 근시일 실행 순서는 ROADMAP.md(Phase 0~4)가 기준이며, 이 문서의 Phase 1~10은
+> ROADMAP.md Phase 4(MVP Implementation) 완료 이후의 제품 확장 단계를 가리킨다.
+> 두 문서의 "Phase" 번호는 서로 다른 트랙이므로 혼용하지 않는다.
+
 ## 비전
 
 공연 기획부터 공연 종료까지 모든 과정을 AI가 지원하는 Stage Production

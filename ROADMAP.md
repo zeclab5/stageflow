@@ -65,6 +65,15 @@ AI를 공연 제작 과정에 자연스럽게 통합한다.
 
 ---
 
+# Phase 4 이후
+
+Phase 4(MVP Implementation) 완료 이후의 장기 제품 로드맵은
+StageFlow_AI_Master_Development_Plan_v1.0.md(Phase 1~10, 5년 로드맵)를 따른다.
+이 문서의 Phase 0~4와 그 문서의 Phase 1~10은 서로 다른 트랙이며, 번호가 겹치더라도
+동일한 단계를 가리키지 않는다.
+
+---
+
 # 현재 상태
 
 Genesis : Foundation Documentation

@@ -28,6 +28,8 @@ AI 협업 플랫폼.
 
 - MASTER_CONTEXT.md : 모든 AI가 가장 먼저 읽는 컨텍스트 문서
 - PROJECT_CONTEXT.md : 현재 프로젝트 맥락
+- ROADMAP.md : 근시일 실행 로드맵 (Phase 0~4, Foundation → MVP)
+- StageFlow_AI_Master_Development_Plan_v1.0.md : 장기 제품 비전 로드맵 (Phase 1~10, 5년 로드맵, MVP 이후 트랙)
 - docs/ : 상세 문서
 - specs/ : 공식 설계 문서
 - adr/ : 아키텍처 결정 기록

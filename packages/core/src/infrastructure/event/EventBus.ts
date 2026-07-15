@@ -1,1 +1,2 @@
-export interface EventBus { publish(event: unknown): Promise<void>; }
+export interface DomainEvent { readonly occurredAt: Date; }
+export interface EventBus { publish(event: DomainEvent): Promise<void>; }
