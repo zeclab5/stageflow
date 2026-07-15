@@ -17,7 +17,7 @@ app.use('/generations', GenerationRouter);
 app.use('/integrations', IntegrationRouter);
 
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
-const server = app.listen(port, () => console.log(`API listening on http://localhost:${port}`));
+app.listen(port, () => console.log(`API listening on http://localhost:${port}`));
 bootstrapContainer().catch(err => {
   console.error('bootstrap failed', err);
 });
