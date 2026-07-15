@@ -1,10 +1,10 @@
 import { Project } from '../../domain/project/Project';
-import { ProjectRepository } from '../../domain/project/ProjectRepository';
+import { ProjectFilter, ProjectRepository } from '../../domain/project/ProjectRepository';
 
 export class ListProjects {
   constructor(private readonly repo: ProjectRepository) {}
 
-  async execute(): Promise<Project[]> {
-    return [];
+  async execute(filter?: ProjectFilter): Promise<Project[]> {
+    return this.repo.findAll(filter);
   }
 }
