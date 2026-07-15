@@ -35,12 +35,20 @@ AI 협업 플랫폼.
 
 ## Vercel 배포
 
-- 이 저장소를 GitHub에 연결한 뒤 Vercel에서 Import한다.
-- Vercel Project Settings > Environment Variables에 다음을 등록한다:
-  - `API_KEY`: API 인증 키
-  - `RESOLUME_HOST`: Resolume 호스트
-  - `RESOLUME_PORT`: Resolume 포트
-- `vercel.json`이 Node.js 서버리스 진입점(`apps/web/src/server.ts`)을 사용하도록 설정되어 있다.
+1. [Vercel Dashboard](https://vercel.com/new)에서 GitHub 저장소 `zeclab5/stageflow` Import
+2. Framework Preset: Other
+3. Build & Output Settings:
+   - Build Command: `npm run build`
+   - Output Directory: leave default
+   - Install Command: `npm install`
+4. Environment Variables 등록:
+   - `API_KEY`
+   - `RESOLUME_HOST`
+   - `RESOLUME_PORT`
+5. Deploy 클릭 -> 도메인 확인 -> Preview URL 확인
+6. Production 배포: main 브랜치 머지 또는 Redeploy
+
+참고: [Vercel Project Settings](https://vercel.com/docs/projects/environment-variables) / [Node.js Runtime](https://vercel.com/docs/functions/runtimes/node-js)
 
 ## 문서 작성 순서
 
