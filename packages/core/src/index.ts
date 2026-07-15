@@ -38,3 +38,13 @@ export { SQLiteIntegrationRepository } from './infrastructure/repository/SQLiteI
 
 export { SQLiteConnection } from './infrastructure/persistence/sqlite/SQLiteConnection';
 export { initializeDatabase } from './infrastructure/persistence/sqlite/SQLiteProvider';
+export { EventBus } from './infrastructure/event/EventBus';
+
+export {
+  ProjectService,
+  SceneService,
+  PromptService,
+  AssetService,
+  GenerationService,
+  IntegrationService
+} from './application/service';
