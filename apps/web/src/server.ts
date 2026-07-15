@@ -94,7 +94,7 @@ app.get('/blog/:slug', async (req, res) => {
 });
 
 app.get('/plugins', async (_req, res) => {
-  const response = await fetch(`${API_BASE}/plugins`);
+  const response = await fetch(`${API_BASE}/api/plugins`);
   const data = await response.json();
   res.send(layout('Plugins', `
     <section class="card">
