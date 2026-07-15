@@ -8,41 +8,177 @@ Date: 2026-07-15
 
 # 목표
 
-StageFlow의 API 계약, 버전 정책, 인증, 에러 처리 규칙을 정의한다.
+StageFlow API의 경로, 요청/응답, 에러 코드, 인증/권한 방식을 정의한다.
 
 ---
 
-# 원칙
+# Base
 
-- API First
-- 내부 API와 외부 API를 분리한다.
-- AI Provider와 직접 연결되는 API는 추상화 계층을 거친다.
-
----
-
-# API 범위
-
-- Project API
-- Scene API
-- Prompt API
-- Asset API
-- Generation API
-- Integration API
+- protocol: HTTP/1.1
+- host: API 서버
+- prefix: `/api`
+- auth: 미정 (MVP: API Key 또는 Bearer)
+- error envelope: `{ "error": string }`
 
 ---
 
-# 버전 정책
+# Projects
 
-- URL prefix: /api/v1
-- Header: API-Version
-- Deprecation 정책: 최소 2개 버전 지원
+GET /api/projects
+- 200: `Project[]`
+- 필터: `status`
+
+POST /api/projects
+- 201: `Project`
+- body: `{ name: string, status?: string }`
+
+GET /api/projects/:id
+- 200: `Project`
+- 404: not found
+
+PATCH /api/projects/:id
+- 200: `Project`
+- body: `{ name?: string, status?: string }`
+
+DELETE /api/projects/:id
+- 204: no content
+- 404: not found
 
 ---
 
-# 에러 정책
+# Scenes
 
-- 공통 에러 포맷 사용
-- 비즈니스 에러와 시스템 에러를 분리한다.
+GET /api/scenes?projectId=:projectId
+- 200: `Scene[]`
+
+POST /api/scenes
+- 201: `Scene`
+- body: `{ projectId: string, name: string, order: number }`
+
+GET /api/scenes/:id
+- 200: `Scene`
+- 404: not found
+
+PATCH /api/scenes/:id
+- 200: `Scene`
+- body: `{ name?: string, order?: number }`
+
+DELETE /api/scenes/:id
+- 204: no content
+- 404: not found
+
+---
+
+# Prompts
+
+GET /api/prompts?projectId=:projectId
+- 200: `Prompt[]`
+
+POST /api/prompts
+- 201: `Prompt`
+- body: `{ projectId: string, template: string, variables?: Record<string, string>, version?: number }`
+
+GET /api/prompts/:id
+- 200: `Prompt`
+- 404: not found
+
+PATCH /api/prompts/:id
+- 200: `Prompt`
+- body: `{ template?: string, variables?: Record<string, string>, version?: number }`
+
+DELETE /api/prompts/:id
+- 204: no content
+- 404: not found
+
+---
+
+# Assets
+
+GET /api/assets?projectId=:projectId&type=:type
+- 200: `Asset[]`
+
+POST /api/assets
+- 201: `Asset`
+- body: `{ projectId: string, type: 'image'|'video'|'audio'|'text', uri: string }`
+
+GET /api/assets/:id
+- 200: `Asset`
+- 404: not found
+
+PATCH /api/assets/:id
+- 200: `Asset`
+- body: `{ type?: 'image'|'video'|'audio'|'text', uri?: string }`
+
+DELETE /api/assets/:id
+- 204: no content
+- 404: not found
+
+---
+
+# Generations
+
+GET /api/generations?projectId=:projectId&sceneId=:sceneId&status=:status
+- 200: `GenerationJob[]`
+
+POST /api/generations
+- 201: `GenerationJob`
+- body: `{ projectId: string, sceneId?: string, promptId?: string, providerRef: string, params?: Record<string, unknown> }`
+
+GET /api/generations/:id
+- 200: `GenerationJob`
+- 404: not found
+
+PATCH /api/generations/:id
+- 200: `GenerationJob`
+- body: `{ status?: string, outputUri?: string }`
+
+DELETE /api/generations/:id
+- 204: no content
+- 404: not found
+
+---
+
+# Integrations
+
+GET /api/integrations
+- 200: `IntegrationProfile[]`
+
+POST /api/integrations
+- 201: `IntegrationProfile`
+- body: `{ name: string, type: string, config?: Record<string, unknown>, status?: string }`
+
+GET /api/integrations/:id
+- 200: `IntegrationProfile`
+- 404: not found
+
+PATCH /api/integrations/:id
+- 200: `IntegrationProfile`
+- body: `{ config?: Record<string, unknown>, status?: string }`
+
+DELETE /api/integrations/:id
+- 204: no content
+- 404: not found
+
+---
+
+# Plugins
+
+GET /api/plugins
+- 200: `{ loaded: PluginRef[], manifests: PluginManifest[] }`
+
+POST /api/plugins/:name/activate
+- 201: `{ name: string }`
+- body: `{ config?: Record<string, unknown> }`
+- 400: activation failed
+
+---
+
+# 구현 상태
+
+- 기본 CRUD 라우트 구현 완료
+- PATCH는 partial update로 처리
+- PATCH/DELETE는 존재하지 않는 리소스 404 반환
+- 전역 에러 핸들러로 app crash 방지
 
 ---
 

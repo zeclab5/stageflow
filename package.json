@@ -23,5 +23,8 @@
     "prettier": "^3.2.5",
     "ts-jest": "^29.4.11",
     "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "http-proxy-middleware": "^4.2.0"
   }
 }
