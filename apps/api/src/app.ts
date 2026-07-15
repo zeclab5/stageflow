@@ -6,6 +6,7 @@ import { AssetRouter } from './routes/AssetRouter';
 import { GenerationRouter } from './routes/GenerationRouter';
 import { IntegrationRouter } from './routes/IntegrationRouter';
 import { PluginsRouter } from './routes/PluginsRouter';
+import { ContentRouter } from './routes/ContentRouter';
 import { bootstrapContainer } from './container';
 import { errorHandler } from './errors';
 
@@ -18,6 +19,8 @@ app.use('/assets', AssetRouter);
 app.use('/generations', GenerationRouter);
 app.use('/integrations', IntegrationRouter);
 app.use('/plugins', PluginsRouter);
+app.use('/api/works', ContentRouter);
+app.use('/api/blog', ContentRouter);
 app.use(errorHandler);
 
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;

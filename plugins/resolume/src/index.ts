@@ -1,6 +1,4 @@
-import { Plugin, PluginConfig, PluginDescriptor } from 'stageflow-core';
-
-export type { PluginConfig } from 'stageflow-core';
+import { Plugin, PluginDescriptor } from 'stageflow-core';
 
 export interface ResolumePluginOptions {
   host?: string;
@@ -10,18 +8,24 @@ export interface ResolumePluginOptions {
 export class ResolumePlugin implements Plugin {
   readonly name = 'resolume';
 
-  constructor(private readonly options: ResolumePluginOptions) {}
+  private host: string;
+  private port: number;
+
+  constructor(options: ResolumePluginOptions = {}) {
+    this.host = options.host ?? '127.0.0.1';
+    this.port = options.port ?? 8080;
+  }
 
   async init(): Promise<void> {
-    console.log('resolume plugin init', this.options);
+    console.log('resolume plugin init');
   }
 
   async shutdown(): Promise<void> {
     console.log('resolume plugin shutdown');
   }
 
-  async connect() {
-    return `connected:${this.options.host ?? '127.0.0.1'}:${this.options.port ?? 8080}`;
+  connect(): string {
+    return `connected:${this.host}:${this.port}`;
   }
 }
 
@@ -32,8 +36,8 @@ export const resolumePluginDescriptor: PluginDescriptor = {
     description: 'Resolume integration plugin stub',
     category: 'integration'
   },
-  create: async (config?: PluginConfig) => {
+  create: async (config?: Record<string, unknown>) => {
     const opts = (config as ResolumePluginOptions | undefined) ?? {};
-    return new ResolumePlugin({ host: opts.host as string | undefined, port: (opts.port as number | undefined) });
+    return new ResolumePlugin(opts);
   }
 };
