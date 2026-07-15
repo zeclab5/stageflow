@@ -26,18 +26,21 @@ AI 협업 플랫폼.
 
 ## 빠른 시작
 
-- MASTER_CONTEXT.md : 모든 AI가 가장 먼저 읽는 컨텍스트 문서
-- PROJECT_CONTEXT.md : 현재 프로젝트 맥락
-- ROADMAP.md : 근시일 실행 로드맵 (Phase 0~4, Foundation → MVP)
-- StageFlow_AI_Master_Development_Plan_v1.0.md : 장기 제품 비전 로드맵 (Phase 1~10, 5년 로드맵, MVP 이후 트랙)
-- docs/ : 상세 문서
-- specs/ : 공식 설계 문서
-- adr/ : 아키텍처 결정 기록
-- rfc/ : 설계 변경 제안
-- plugins/ : 플러그인 모듈
-- apps/ : 애플리케이션
-- packages/ : 공통 패키지
-- services/ : 서비스
+1. 환경 변수 복사: `cp .env.example .env`
+2. API 키 설정: `.env`의 `API_KEY`에 원하는 값 입력
+3. 의존성 설치: `npm install`
+4. 빌드: `npm run build`
+5. 린트: `npm run lint`
+6. 테스트: `npm test`
+
+## Vercel 배포
+
+- 이 저장소를 GitHub에 연결한 뒤 Vercel에서 Import한다.
+- Vercel Project Settings > Environment Variables에 다음을 등록한다:
+  - `API_KEY`: API 인증 키
+  - `RESOLUME_HOST`: Resolume 호스트
+  - `RESOLUME_PORT`: Resolume 포트
+- `vercel.json`이 Node.js 서버리스 진입점(`apps/web/src/server.ts`)을 사용하도록 설정되어 있다.
 
 ## 문서 작성 순서
 

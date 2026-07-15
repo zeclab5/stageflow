@@ -3,21 +3,25 @@ import { Plugin, PluginDescriptor } from 'stageflow-core';
 export interface ResolumePluginOptions {
   host?: string;
   port?: number;
+  baseUrl?: string;
 }
 
 export class ResolumePlugin implements Plugin {
   readonly name = 'resolume';
 
-  private host: string;
-  private port: number;
+  private readonly baseUrl: string;
 
   constructor(options: ResolumePluginOptions = {}) {
-    this.host = options.host ?? '127.0.0.1';
-    this.port = options.port ?? 8080;
+    const host = options.host ?? '127.0.0.1';
+    const port = options.port ?? 8080;
+    this.baseUrl = options.baseUrl ?? `http://${host}:${port}/api/v1`;
   }
 
   async init(): Promise<void> {
-    console.log('resolume plugin init');
+    const res = await fetch(`${this.baseUrl}/composition/list_composition`, { signal: AbortSignal.timeout(2000) });
+    if (!res.ok) {
+      throw new Error(`resolume not ready: ${res.status}`);
+    }
   }
 
   async shutdown(): Promise<void> {
@@ -25,7 +29,7 @@ export class ResolumePlugin implements Plugin {
   }
 
   connect(): string {
-    return `connected:${this.host}:${this.port}`;
+    return this.baseUrl;
   }
 }
 
