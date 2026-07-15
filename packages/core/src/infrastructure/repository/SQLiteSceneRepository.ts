@@ -5,12 +5,12 @@ export class SQLiteSceneRepository {
   constructor(private readonly db: SQLiteConnection) {}
 
   async findById(id: SceneId): Promise<Scene | null> {
-    const row = await this.db.get<{ id: string; projectId: string; name: string; order: number }>(
-      'SELECT id, project_id as projectId, name, "order" as order FROM scenes WHERE id = ?',
+    const row = await this.db.get<{ id: string; projectId: string; name: string; sceneOrder: number }>(
+      'SELECT id, project_id as projectId, name, "order" as sceneOrder FROM scenes WHERE id = ?',
       [id]
     );
     if (!row) return null;
-    return new Scene({ id: row.id, projectId: row.projectId, name: row.name, order: row.order });
+    return new Scene({ id: row.id, projectId: row.projectId, name: row.name, order: row.sceneOrder });
   }
 
   async save(scene: Scene): Promise<void> {
