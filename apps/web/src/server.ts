@@ -339,28 +339,32 @@ app.get('/show-flow', async (_req, res) => {
         <h2>Show Flow</h2>
         <span id="current-status" class="muted">Ready</span>
       </div>
-      <div style="margin-top:12px;display:flex;gap:8px;">
+      <div style="margin-top:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <input id="project-id" value="${projects[0]?.id ?? 'p1'}" style="padding:8px 12px;min-width:160px;" />
+        <button id="reload" style="padding:8px 12px;">Reload</button>
+        <button id="start" style="padding:8px 12px;">Start</button>
+        <button id="stop" style="padding:8px 12px;">Stop</button>
         <button id="prev-scene" style="padding:8px 12px;">Previous</button>
-        <button id="activate-scene" style="padding:8px 12px;">Activate</button>
         <button id="next-scene" style="padding:8px 12px;">Next</button>
       </div>
       <pre id="current-scene" class="muted" style="margin-top:12px;">No active scene.</pre>
       <div id="preview" style="position:relative;width:100%;aspect-ratio:16/9;background:#0b1220;border-radius:12px;overflow:hidden;border:1px solid #1f2937;margin-top:12px;"></div>
       <ul id="scene-list" style="list-style:none;padding:0;margin-top:12px;"></ul>
+      <ul id="cue-list" style="list-style:none;padding:0;margin-top:12px;"></ul>
     </section>
     <script>
       (async () => {
         const listEl = document.getElementById('scene-list');
+        const cueListEl = document.getElementById('cue-list');
         const statusEl = document.getElementById('current-status');
         const currentEl = document.getElementById('current-scene');
+        const projectEl = document.getElementById('project-id');
         const projects = ${JSON.stringify(projects)};
-        const projectId = projects[0]?.id;
-        if (!projectId) {
-          currentEl.textContent = 'Create a project first.';
-          return;
-        }
+        const projectId = projects[0]?.id || 'p1';
+        projectEl.value = projectId;
         let scenes = [];
         let activeSceneId = null;
+        let cues = [];
         const previewEl = document.getElementById('preview');
         async function loadObjects() {
           if (!activeSceneId) {
@@ -392,9 +396,18 @@ app.get('/show-flow', async (_req, res) => {
           }
         }
         async function load() {
-          const res = await fetch('${API_BASE}/scenes?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
-          scenes = await res.json();
+          const projectId = projectEl.value.trim() || 'p1';
+          const [scenesRes, cuesRes, statusRes] = await Promise.all([
+            fetch('${API_BASE}/scenes?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } }),
+            fetch('${API_BASE}/cues?sceneId=all&projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } }),
+            fetch('${API_BASE}/api/playback/status', { headers: { 'x-api-key': 'test-api-key' } })
+          ]);
+          scenes = await scenesRes.json();
+          cues = await cuesRes.json();
+          const status = await statusRes.json();
+          statusEl.textContent = status.playing ? 'Playing' : 'Stopped';
           listEl.innerHTML = '';
+          cueListEl.innerHTML = '';
           for (const scene of scenes) {
             const li = document.createElement('li');
             li.className = 'card';
@@ -405,25 +418,43 @@ app.get('/show-flow', async (_req, res) => {
               await activate(scene.id);
             });
             listEl.appendChild(li);
+            const sceneCues = cues.filter((c) => c.sceneId === scene.id);
+            for (const cue of sceneCues) {
+              const cueLi = document.createElement('li');
+              cueLi.className = 'card';
+              cueLi.textContent = 'Cue: ' + cue.name;
+              cueLi.style.cursor = 'pointer';
+              cueLi.addEventListener('click', async () => {
+                await triggerCue(cue.id);
+              });
+              cueListEl.appendChild(cueLi);
+            }
           }
           currentEl.textContent = activeSceneId ? ('Active: ' + (scenes.find((s) => s.id === activeSceneId)?.name ?? activeSceneId)) : 'No active scene.';
           await loadObjects();
         }
         async function activate(id) {
+          const projectId = projectEl.value.trim() || 'p1';
           await fetch('${API_BASE}/scenes/' + encodeURIComponent(id) + '/activate?projectId=' + encodeURIComponent(projectId), {
             method: 'POST',
             headers: { 'x-api-key': 'test-api-key' }
           });
           statusEl.textContent = 'Active';
-          render();
+          await load();
         }
-        function render() { load(); }
-        document.getElementById('activate-scene').addEventListener('click', async () => {
-          if (!activeSceneId) {
-            statusEl.textContent = 'Select a scene first.';
-            return;
-          }
-          await activate(activeSceneId);
+        async function triggerCue(id) {
+          await fetch('${API_BASE}/api/playback/cues/' + encodeURIComponent(id) + '/trigger', { method: 'POST', headers: { 'x-api-key': 'test-api-key' } });
+          await load();
+        }
+        document.getElementById('reload').addEventListener('click', load);
+        document.getElementById('start').addEventListener('click', async () => {
+          const projectId = projectEl.value.trim() || 'p1';
+          await fetch('${API_BASE}/api/playback/start', { method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': 'test-api-key' }, body: JSON.stringify({ projectId }) });
+          await load();
+        });
+        document.getElementById('stop').addEventListener('click', async () => {
+          await fetch('${API_BASE}/api/playback/stop', { method: 'POST', headers: { 'x-api-key': 'test-api-key' } });
+          await load();
         });
         document.getElementById('next-scene').addEventListener('click', async () => {
           if (!scenes.length) return;
