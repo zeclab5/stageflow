@@ -37,6 +37,7 @@ export { SQLitePromptRepository } from './infrastructure/repository/SQLitePrompt
 export { SQLiteAssetRepository } from './infrastructure/repository/SQLiteAssetRepository';
 export { SQLiteGenerationJobRepository } from './infrastructure/repository/SQLiteGenerationJobRepository';
 export { SQLiteIntegrationRepository } from './infrastructure/repository/SQLiteIntegrationRepository';
+export { SQLiteCueRepository } from './infrastructure/repository/SQLiteCueRepository';
 
 export { SQLiteConnection } from './infrastructure/persistence/sqlite/SQLiteConnection';
 export { initializeDatabase } from './infrastructure/persistence/sqlite/SQLiteProvider';
@@ -48,5 +49,6 @@ export {
   PromptService,
   AssetService,
   GenerationService,
-  IntegrationService
+  IntegrationService,
+  CueService
 } from './application/service';

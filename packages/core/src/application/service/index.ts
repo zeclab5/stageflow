@@ -4,3 +4,4 @@ export { PromptService } from './PromptService';
 export { AssetService } from './AssetService';
 export { GenerationService } from './GenerationService';
 export { IntegrationService } from './IntegrationService';
+export { CueService } from './CueService';
