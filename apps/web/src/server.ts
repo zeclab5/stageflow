@@ -292,17 +292,18 @@ app.get('/screens', async (_req, res) => {
           <button id="save-screen" style="padding:8px 14px;">Save</button>
           <button id="delete-screen" style="padding:8px 14px;">Delete</button>
         </div>
-        <pre id="screen-detail" class="muted" style="margin-top:12px;">Select a screen.</pre>
       </div>
+      <h3 style="margin-top:16px;">Screen Preview</h3>
+      <div id="screen-preview" style="margin-top:8px;background:#0b1220;border-radius:12px;border:1px solid #1f2937;padding:8px;min-height:140px;color:#6b7280;">Select a screen.</div>
     </section>
     <script>
       (async () => {
         const listEl = document.getElementById('screen-list');
-        const detailEl = document.getElementById('screen-detail');
+        const detailEl = document.querySelector('#screen-form + div pre') || document.createElement('pre');
         const projects = ${JSON.stringify(projects)};
         const projectId = projects[0]?.id;
         if (!projectId) {
-          detailEl.textContent = 'Create a project first.';
+          document.getElementById('screen-preview').textContent = 'Create a project first.';
           return;
         }
         let selectedId = null;
@@ -330,7 +331,21 @@ app.get('/screens', async (_req, res) => {
               document.getElementById('screen-w').value = screen.resolution?.width || '';
               document.getElementById('screen-h').value = screen.resolution?.height || '';
               document.getElementById('screen-enabled').checked = Boolean(screen.enabled);
-              detailEl.textContent = JSON.stringify(screen, null, 2);
+              const preview = document.getElementById('screen-preview');
+              preview.textContent = 'Loading preview...';
+              try {
+                const sceneRes = await fetch('${API_BASE}/scenes?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
+                const scenes = await sceneRes.json();
+                const sceneId = scenes[0]?.id;
+                if (!sceneId) { preview.textContent = 'Create a scene to preview'; return; }
+                const r = await fetch('${API_BASE}/api/render/scene/' + encodeURIComponent(sceneId) + '?projectId=' + encodeURIComponent(projectId) + '&screenId=' + encodeURIComponent(screen.id), { headers: { 'x-api-key': 'test-api-key' } });
+                const data = await r.json();
+                if (!data?.trees?.length) { preview.textContent = 'No render tree'; return; }
+                const tree = data.trees[0];
+                preview.innerHTML = '<strong>' + tree.screenId + '</strong><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">' + tree.objects.map((o: any) => '<div style="width:80px;height:80px;background:#2563eb;border:1px solid #e5e7eb;border-radius:10px;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;">' + o.assetId + '</div>').join('') + '</div>';
+              } catch (e) {
+                preview.textContent = 'Preview error: ' + e.message;
+              }
             });
             listEl.appendChild(li);
           }
@@ -347,14 +362,13 @@ app.get('/screens', async (_req, res) => {
             headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
             body: JSON.stringify({ name, type, resolution: { width, height }, enabled, order: 0 })
           });
-          detailEl.textContent = 'Saved';
           await load();
         });
         document.getElementById('delete-screen').addEventListener('click', async () => {
           if (!selectedId) return;
           await fetch('${API_BASE}/screens/' + selectedId, { method: 'DELETE', headers: { 'x-api-key': 'test-api-key' } });
           selectedId = null;
-          detailEl.textContent = 'Select a screen.';
+          document.getElementById('screen-preview').textContent = 'Select a screen.';
           await load();
         });
         await load();
@@ -636,12 +650,14 @@ app.get('/cues', async (_req, res) => {
       <h2>Cues</h2>
       <select id="cue-scene" style="padding:8px 12px;"></select>
       <button id="add-cue" style="padding:8px 12px;margin-left:8px;">Add Cue</button>
+      <div id="cue-timeline" style="margin-top:12px;display:flex;gap:8px;overflow-x:auto;padding:8px;background:#0b1220;border-radius:12px;border:1px solid #1f2937;min-height:90px;align-items:center;"></div>
       <ul id="cue-list" style="list-style:none;padding:0;margin-top:12px;"></ul>
     </section>
     <script>
       (async () => {
         const listEl = document.getElementById('cue-list');
         const sceneEl = document.getElementById('cue-scene');
+        const timelineEl = document.getElementById('cue-timeline');
         const projects = ${JSON.stringify(projects)};
         const projectId = projects[0]?.id;
         if (!projectId) {
@@ -655,7 +671,8 @@ app.get('/cues', async (_req, res) => {
           const res = await fetch('${API_BASE}/cues?sceneId=' + encodeURIComponent(sceneEl.value), { headers: { 'x-api-key': 'test-api-key' } });
           const cues = await res.json();
           listEl.innerHTML = '';
-          for (const cue of cues) {
+          timelineEl.innerHTML = '';
+          for (const cue of cues.sort((a, b) => a.timelinePosition - b.timelinePosition)) {
             const li = document.createElement('li');
             li.className = 'card';
             li.draggable = true;
@@ -682,6 +699,14 @@ app.get('/cues', async (_req, res) => {
               load();
             });
             listEl.appendChild(li);
+
+            const pill = document.createElement('div');
+            pill.textContent = cue.name + ' #' + cue.timelinePosition;
+            pill.style.cssText = 'padding:8px 12px;background:#1f2937;border:1px solid #e5e7eb;border-radius:10px;color:#e5e7eb;white-space:nowrap;cursor:pointer;';
+            pill.addEventListener('click', async () => {
+              await fetch('${API_BASE}/api/playback/cues/' + encodeURIComponent(cue.id) + '/trigger', { method: 'POST', headers: { 'x-api-key': 'test-api-key' } });
+            });
+            timelineEl.appendChild(pill);
           }
         }
         document.getElementById('add-cue').addEventListener('click', async () => {

@@ -10,8 +10,9 @@ const sceneRepo = (): SQLiteSceneRepository => container.resolve<SQLiteSceneRepo
 
 router.get('/scene/:sceneId', async (req: Request, res: Response) => {
   const projectId = (req.query.projectId as string) || 'p1';
+  const screenId = (req.query.screenId as string) || undefined;
   const objects = await objectRepo().listByScene(req.params.sceneId);
-  const screens = await screenRepo().listByProject(projectId);
+  const screens = screenId ? (await screenRepo().listByProject(projectId)).filter((s) => s.id === screenId) : await screenRepo().listByProject(projectId);
   const scene = await sceneRepo().findById(req.params.sceneId);
   if (!scene) return res.status(404).json({ error: 'scene not found' });
   const result = renderer.buildTrees(objects, screens, scene.id);
