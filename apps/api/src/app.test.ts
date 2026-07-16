@@ -150,6 +150,24 @@ describe('API auth', () => {
     expect(response.status).toBe(401);
     expect(response.body).toMatchObject({ error: 'unauthorized' });
   });
+
+  it('rejects missing auth on cues even without API key', async () => {
+    const create = await request(app)
+      .post('/projects')
+      .set('x-api-key', 'test-api-key')
+      .send({ name: 'Auth Cue Check' });
+    const projectId = create.body.id;
+    const scene = await request(app)
+      .post('/scenes?projectId=' + encodeURIComponent(projectId))
+      .set('x-api-key', 'test-api-key')
+      .send({ name: 'Scene Cue', order: 1 });
+    const cue = await request(app)
+      .post('/cues')
+      .set('x-api-key', 'test-api-key')
+      .send({ sceneId: scene.body.id, name: 'Secure Cue', timelinePosition: 1 });
+    const response = await request(app).patch('/cues/' + cue.body.id).send({ name: 'Hacked' });
+    expect(response.status).toBe(401);
+  });
 });
 
 describe('API cues', () => {
