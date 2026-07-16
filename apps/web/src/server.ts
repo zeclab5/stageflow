@@ -717,6 +717,7 @@ app.get('/cues', async (_req, res) => {
       <select id="cue-scene" style="padding:8px 12px;"></select>
       <button id="add-cue" style="padding:8px 12px;margin-left:8px;">Add Cue</button>
       <div id="cue-timeline" style="margin-top:12px;display:flex;gap:8px;overflow-x:auto;padding:8px;background:#0b1220;border-radius:12px;border:1px solid #1f2937;min-height:90px;align-items:center;"></div>
+      <pre id="cue-trigger-status" class="muted" style="margin-top:8px;">Trigger result: idle</pre>
       <ul id="cue-list" style="list-style:none;padding:0;margin-top:12px;"></ul>
     </section>
     <script>
@@ -724,6 +725,7 @@ app.get('/cues', async (_req, res) => {
         const listEl = document.getElementById('cue-list');
         const sceneEl = document.getElementById('cue-scene');
         const timelineEl = document.getElementById('cue-timeline');
+        const triggerStatus = document.getElementById('cue-trigger-status');
         const projects = ${JSON.stringify(projects)};
         const projectId = projects[0]?.id;
         if (!projectId) {
@@ -770,7 +772,20 @@ app.get('/cues', async (_req, res) => {
             pill.textContent = cue.name + ' #' + cue.timelinePosition;
             pill.style.cssText = 'padding:8px 12px;background:#1f2937;border:1px solid #e5e7eb;border-radius:10px;color:#e5e7eb;white-space:nowrap;cursor:pointer;';
             pill.addEventListener('click', async () => {
-              await fetch('${API_BASE}/api/playback/cues/' + encodeURIComponent(cue.id) + '/trigger', { method: 'POST', headers: { 'x-api-key': 'test-api-key' } });
+              try {
+                const r = await fetch('${API_BASE}/api/playback/cues/' + encodeURIComponent(cue.id) + '/trigger', { method: 'POST', headers: { 'x-api-key': 'test-api-key' } });
+                const json = await r.json();
+                if (r.ok) {
+                  triggerStatus.textContent = 'Triggered: ' + cue.name + ' -> scene=' + (json.targetScene?.name ?? json.scene?.name ?? 'unknown');
+                  triggerStatus.style.color = '#e5e7eb';
+                } else {
+                  triggerStatus.textContent = 'Trigger failed: ' + (json.error || r.status);
+                  triggerStatus.style.color = '#fca5a5';
+                }
+              } catch (e: any) {
+                triggerStatus.textContent = 'Trigger error: ' + e.message;
+                triggerStatus.style.color = '#fca5a5';
+              }
             });
             timelineEl.appendChild(pill);
           }
