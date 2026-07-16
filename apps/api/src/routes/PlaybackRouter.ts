@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { MultiScreenRenderer, SQLiteCueRepository, SQLiteSceneRepository, SQLiteSceneObjectRepository, SQLiteScreenRepository, eventBus, initializeDatabase } from 'stageflow-core';
+import { MultiScreenRenderer, SQLiteCueRepository, SQLiteSceneRepository, SQLiteSceneObjectRepository, SQLiteScreenRepository, eventBus } from 'stageflow-core';
 import { container } from '../container';
 
 const router = Router();
