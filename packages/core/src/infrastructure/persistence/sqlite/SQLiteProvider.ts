@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS scene_objects (
   rotation REAL NOT NULL DEFAULT 0,
   opacity REAL NOT NULL DEFAULT 1,
   visible INTEGER NOT NULL DEFAULT 1,
-  layer_index INTEGER NOT NULL DEFAULT 0
+  layer_index INTEGER NOT NULL DEFAULT 0,
+  outputs TEXT NOT NULL DEFAULT '[]'
 );
 `;

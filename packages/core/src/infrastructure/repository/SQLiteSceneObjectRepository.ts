@@ -14,7 +14,8 @@ function toRow(object: SceneObjectProps) {
     rotation: object.rotation,
     opacity: object.opacity,
     visible: object.visible ? 1 : 0,
-    layer_index: object.layerIndex
+    layer_index: object.layerIndex,
+    outputs: JSON.stringify(object.outputs ?? [])
   };
 }
 
@@ -30,7 +31,8 @@ function toDomain(row: Record<string, unknown>): SceneObjectProps {
     rotation: Number(row.rotation),
     opacity: Number(row.opacity),
     visible: Number(row.visible) === 1,
-    layerIndex: Number(row.layer_index)
+    layerIndex: Number(row.layer_index),
+    outputs: Array.isArray(row.outputs) ? row.outputs.map(String) : []
   };
 }
 
