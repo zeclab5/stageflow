@@ -127,15 +127,27 @@ app.get('/scenes/:id', async (req, res) => {
         <input id="asset-h" placeholder="h" style="width:70px" />
       </div>
       <h3 style="margin-top:12px;">Objects</h3>
-      <ul id="object-list" style="list-style:none;padding:0;margin-top:8px;"></ul>
+      <div id="output-panel" style="margin-top:8px;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <select id="screen-options" style="padding:8px 12px;"></select>
+          <button id="add-output" style="padding:8px 12px;">Assign Output</button>
+        </div>
+        <ul id="object-list" style="list-style:none;padding:0;margin-top:8px;"></ul>
+      </div>
     </section>
     <script>
       (async () => {
         const canvasEl = document.getElementById('canvas');
         const listEl = document.getElementById('object-list');
+        const screenEl = document.getElementById('screen-options');
+        const addOutputBtn = document.getElementById('add-output');
         const projectId = '${scene.projectId}';
+        const sceneId = '${req.params.id}';
+        const screenRes = await fetch('${API_BASE}/screens?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
+        const screens = screenRes.ok ? await screenRes.json() : [];
+        screenEl.innerHTML = screens.map((s: any) => '<option value="' + s.id + '">' + s.name + '</option>').join('');
         async function loadObjects() {
-          const r = await fetch('${API_BASE}/scenes/${req.params.id}/objects', { headers: { 'x-api-key': 'test-api-key' } });
+          const r = await fetch('${API_BASE}/scenes/' + encodeURIComponent(sceneId) + '/objects', { headers: { 'x-api-key': 'test-api-key' } });
           const objects = await r.json();
           listEl.innerHTML = '';
           canvasEl.innerHTML = '';
@@ -160,7 +172,21 @@ app.get('/scenes/:id', async (req, res) => {
             canvasEl.appendChild(el);
             const li = document.createElement('li');
             li.className = 'card';
-            li.textContent = asset.name || object.assetId + ' (' + object.x + ',' + object.y + ')';
+            li.textContent = (asset.name || object.assetId) + ' (' + object.x + ',' + object.y + ') outputs:' + (object.outputs || []).join(',') || 'None';
+            const assignBtn = document.createElement('button');
+            assignBtn.textContent = 'Assign Output';
+            assignBtn.style.marginLeft = '8px';
+            assignBtn.addEventListener('click', async () => {
+              const current = object.outputs || [];
+              const next = current.includes(screenEl.value) ? current.filter((v: string) => v !== screenEl.value) : [...current, screenEl.value];
+              await fetch('${API_BASE}/scenes/objects/' + object.id, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
+                body: JSON.stringify({ outputs: next })
+              });
+              loadObjects();
+            });
+            li.appendChild(assignBtn);
             listEl.appendChild(li);
           }
         }
@@ -171,11 +197,14 @@ app.get('/scenes/:id', async (req, res) => {
             body: JSON.stringify({ name: 'Image ' + (listEl.children.length + 1), type: 'image', uri: '/tmp/image.png' })
           });
           const asset = await createRes.json();
-          await fetch('${API_BASE}/scenes/${req.params.id}/assets', {
+          await fetch('${API_BASE}/scenes/' + encodeURIComponent(sceneId) + '/assets', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
             body: JSON.stringify({ assetId: asset.id, x: document.getElementById('asset-x').value || 0, y: document.getElementById('asset-y').value || 0, width: document.getElementById('asset-w').value || 200, height: document.getElementById('asset-h').value || 200 })
           });
+          loadObjects();
+        });
+        addOutputBtn.addEventListener('click', () => {
           loadObjects();
         });
         await loadObjects();
