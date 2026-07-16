@@ -342,7 +342,33 @@ app.get('/screens', async (_req, res) => {
                 const data = await r.json();
                 if (!data?.trees?.length) { preview.textContent = 'No render tree'; return; }
                 const tree = data.trees[0];
-                preview.innerHTML = '<strong>' + tree.screenId + '</strong><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">' + tree.objects.map((o: any) => '<div style="width:80px;height:80px;background:#2563eb;border:1px solid #e5e7eb;border-radius:10px;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;">' + o.assetId + '</div>').join('') + '</div>';
+                const res = tree.resolution || { width: 1920, height: 1080 };
+                const maxDim = Math.max(res.width || 1920, res.height || 1080, 1);
+                preview.innerHTML = '<strong>' + tree.screenId + '</strong><div style="position:relative;aspect-ratio:' + (res.width / res.height).toFixed(4) + ';background:#0b1220;border-radius:12px;border:1px solid #1f2937;overflow:hidden;"></div>';
+                const canvas = preview.querySelector('div[style*="overflow:hidden"]');
+                const scale = Math.min(canvas.clientWidth / res.width, canvas.clientHeight / res.height, 1);
+                const offsetX = (canvas.clientWidth - res.width * scale) / 2;
+                const offsetY = (canvas.clientHeight - res.height * scale) / 2;
+                for (const o of tree.objects) {
+                  const el = document.createElement('div');
+                  el.textContent = o.assetId;
+                  el.style.position = 'absolute';
+                  el.style.left = (offsetX + (o.x || 0) * scale) + 'px';
+                  el.style.top = (offsetY + (o.y || 0) * scale) + 'px';
+                  el.style.width = Math.max(8, ((o.width || 80) * scale)) + 'px';
+                  el.style.height = Math.max(8, ((o.height || 80) * scale)) + 'px';
+                  el.style.background = 'rgba(37,99,235,0.85)';
+                  el.style.border = '1px solid rgba(255,255,255,0.4)';
+                  el.style.borderRadius = '10px';
+                  el.style.color = '#fff';
+                  el.style.fontSize = '10px';
+                  el.style.display = 'flex';
+                  el.style.alignItems = 'center';
+                  el.style.justifyContent = 'center';
+                  el.style.opacity = o.visible ? '1' : '0';
+                  el.textContent = o.visible ? o.assetId : o.assetId + ' hidden';
+                  canvas.appendChild(el);
+                }
               } catch (e) {
                 preview.textContent = 'Preview error: ' + e.message;
               }
