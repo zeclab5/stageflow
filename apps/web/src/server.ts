@@ -456,6 +456,44 @@ app.get('/show-flow', async (_req, res) => {
           await fetch('${API_BASE}/api/playback/stop', { method: 'POST', headers: { 'x-api-key': 'test-api-key' } });
           await load();
         });
+        const advanceMsInput = document.createElement('input');
+        advanceMsInput.id = 'advance-ms';
+        advanceMsInput.value = '3000';
+        advanceMsInput.style.padding = '8px 12px';
+        advanceMsInput.style.width = '90px';
+        const advanceBtn = document.createElement('button');
+        advanceBtn.id = 'advance';
+        advanceBtn.textContent = 'Advance';
+        advanceBtn.style.padding = '8px 12px';
+        const stopAdvanceBtn = document.createElement('button');
+        stopAdvanceBtn.id = 'stop-advance';
+        stopAdvanceBtn.textContent = 'Stop Auto';
+        stopAdvanceBtn.style.padding = '8px 12px';
+        document.querySelector('#' + projects[0]?.id + ' #project-id').parentElement.insertBefore(advanceMsInput, document.getElementById('reload').nextSibling);
+        document.querySelector('#' + projects[0]?.id + ' #project-id').parentElement.insertBefore(advanceBtn, document.getElementById('reload').nextSibling);
+        document.querySelector('#' + projects[0]?.id + ' #project-id').parentElement.insertBefore(stopAdvanceBtn, document.getElementById('reload').nextSibling);
+        let advanceTimer = null;
+        function scheduleAdvance() {
+          if (advanceTimer) clearInterval(advanceTimer);
+          const ms = Number(advanceMsInput.value) || 3000;
+          advanceTimer = setInterval(async () => {
+            try {
+              await fetch('${API_BASE}/api/playback/advance', { method: 'POST', headers: { 'x-api-key': 'test-api-key' } });
+              await load();
+            } catch {}
+          }, ms);
+        }
+        advanceBtn.addEventListener('click', async () => {
+          await fetch('${API_BASE}/api/playback/start', { method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': 'test-api-key' }, body: JSON.stringify({ projectId: projectEl.value.trim() || 'p1' }) });
+          scheduleAdvance();
+          await load();
+        });
+        stopAdvanceBtn.addEventListener('click', async () => {
+          if (advanceTimer) clearInterval(advanceTimer);
+          advanceTimer = null;
+          await fetch('${API_BASE}/api/playback/stop', { method: 'POST', headers: { 'x-api-key': 'test-api-key' } });
+          await load();
+        });
         document.getElementById('next-scene').addEventListener('click', async () => {
           if (!scenes.length) return;
           const idx = scenes.findIndex((s) => s.id === activeSceneId);

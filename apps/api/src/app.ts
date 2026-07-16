@@ -13,6 +13,7 @@ import { ResolumeRouter } from './routes/ResolumeRouter';
 import { ScreenRouter } from './routes/ScreenRouter';
 import { InspectorRouter } from './routes/InspectorRouter';
 import { PlaybackRouter } from './routes/PlaybackRouter';
+import { RenderRouter } from './routes/RenderRouter';
 import { bootstrapContainer } from './container';
 import { requiredApiKey } from './auth';
 import { errorHandler } from './errors';
@@ -35,6 +36,7 @@ export async function createApp() {
   app.use('/screens', ScreenRouter);
   app.use('/inspector', InspectorRouter);
   app.use('/api/playback', PlaybackRouter);
+  app.use('/api/render', RenderRouter);
   app.use('/api/plugins', PluginsRouter);
   app.use('/api/works', WorksRouter);
   app.use('/api/blog', BlogRouter);
