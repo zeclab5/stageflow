@@ -40,6 +40,15 @@ export async function bootstrapContainer() {
   container.register('CueService', () => new CueService(cueRepo));
   container.register('ScreenService', () => new ScreenService(screenRepo));
   container.register('SceneObjectService', () => new SceneObjectService(objectRepo));
+  container.register('SQLiteProjectRepository', () => projectRepo);
+  container.register('SQLiteSceneRepository', () => sceneRepo);
+  container.register('SQLitePromptRepository', () => promptRepo);
+  container.register('SQLiteAssetRepository', () => assetRepo);
+  container.register('SQLiteGenerationJobRepository', () => generationRepo);
+  container.register('SQLiteIntegrationRepository', () => integrationRepo);
+  container.register('SQLiteCueRepository', () => cueRepo);
+  container.register('SQLiteScreenRepository', () => screenRepo);
+  container.register('SQLiteSceneObjectRepository', () => objectRepo);
 
   pluginRegistry.registerDescriptor(healthPluginDescriptor);
   await pluginRegistry.load('health');
