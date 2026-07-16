@@ -570,13 +570,14 @@ app.get('/library', async (_req, res) => {
 app.get('/works', async (_req, res) => {
   const response = await fetch(`${API_BASE}/api/works`);
   const data = await response.json();
+  const items = (data ?? []) as Array<{ slug: string; title?: string }>;
   res.send(layout('Works', `
     <section class="card">
       <h2>Works</h2>
       <ul style="list-style:none;padding:0;">
-        ${data.map((item: any) => `<li><a href="/works/${item.slug}">${item.title || item.slug}</a></li>`).join('')}
+        ${items.map((item) => `<li><a href="/works/${item.slug}">${item.title || item.slug}</a></li>`).join('')}
       </ul>
-      <p class="muted">${data.length ? data.length + ' items' : 'No works yet.'}</p>
+      <p class="muted">${items.length ? items.length + ' items' : 'No works yet.'}</p>
     </section>
   `));
 });
