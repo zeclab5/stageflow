@@ -347,8 +347,8 @@ app.get('/show-flow', async (_req, res) => {
         <button id="prev-scene" style="padding:8px 12px;">Previous</button>
         <button id="next-scene" style="padding:8px 12px;">Next</button>
       </div>
+      <div id="preview-grid" style="position:relative;width:100%;background:#0b1220;border-radius:12px;overflow:hidden;border:1px solid #1f2937;margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;padding:12px;"></div>
       <pre id="current-scene" class="muted" style="margin-top:12px;">No active scene.</pre>
-      <div id="preview" style="position:relative;width:100%;aspect-ratio:16/9;background:#0b1220;border-radius:12px;overflow:hidden;border:1px solid #1f2937;margin-top:12px;"></div>
       <ul id="scene-list" style="list-style:none;padding:0;margin-top:12px;"></ul>
       <ul id="cue-list" style="list-style:none;padding:0;margin-top:12px;"></ul>
     </section>
@@ -365,7 +365,7 @@ app.get('/show-flow', async (_req, res) => {
         let scenes = [];
         let activeSceneId = null;
         let cues = [];
-        const previewEl = document.getElementById('preview');
+        const previewEl = document.getElementById('preview-grid');
         async function loadRender() {
           if (!activeSceneId) {
             previewEl.innerHTML = '';
@@ -376,25 +376,45 @@ app.get('/show-flow', async (_req, res) => {
           const data = await r.json();
           previewEl.innerHTML = '';
           if (!data?.trees?.length) return;
-          const tree = data.trees[0];
-          for (const object of tree.objects) {
-            const el = document.createElement('div');
-            el.textContent = object.assetId;
-            el.style.position = 'absolute';
-            el.style.left = object.x + 'px';
-            el.style.top = object.y + 'px';
-            el.style.width = object.width + 'px';
-            el.style.height = object.height + 'px';
-            el.style.background = '#2563eb';
-            el.style.borderRadius = '12px';
-            el.style.border = '1px solid #e5e7eb';
-            el.style.color = '#fff';
-            el.style.display = 'flex';
-            el.style.alignItems = 'center';
-            el.style.justifyContent = 'center';
-            el.style.fontSize = '12px';
-            el.style.opacity = object.visible ? object.opacity : '0';
-            previewEl.appendChild(el);
+          for (const tree of data.trees) {
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            wrapper.style.aspectRatio = '16/9';
+            wrapper.style.background = '#0b1220';
+            wrapper.style.border = '1px solid #1f2937';
+            wrapper.style.borderRadius = '12px';
+            wrapper.style.overflow = 'hidden';
+            const label = document.createElement('div');
+            label.textContent = tree.screenId;
+            label.style.position = 'absolute';
+            label.style.top = '8px';
+            label.style.left = '8px';
+            label.style.background = 'rgba(0,0,0,0.5)';
+            label.style.color = '#e5e7eb';
+            label.style.padding = '4px 8px';
+            label.style.borderRadius = '8px';
+            label.style.fontSize = '12px';
+            wrapper.appendChild(label);
+            for (const object of tree.objects) {
+              const el = document.createElement('div');
+              el.textContent = object.assetId;
+              el.style.position = 'absolute';
+              el.style.left = object.x + 'px';
+              el.style.top = object.y + 'px';
+              el.style.width = object.width + 'px';
+              el.style.height = object.height + 'px';
+              el.style.background = '#2563eb';
+              el.style.borderRadius = '12px';
+              el.style.border = '1px solid #e5e7eb';
+              el.style.color = '#fff';
+              el.style.display = 'flex';
+              el.style.alignItems = 'center';
+              el.style.justifyContent = 'center';
+              el.style.fontSize = '12px';
+              el.style.opacity = object.visible ? object.opacity : '0';
+              wrapper.appendChild(el);
+            }
+            previewEl.appendChild(wrapper);
           }
         }
         async function load() {
