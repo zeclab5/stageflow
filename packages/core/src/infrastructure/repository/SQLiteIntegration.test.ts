@@ -5,6 +5,8 @@ import { Prompt as PromptModel } from '../../domain/prompt/PromptTemplate';
 import { SQLiteAssetRepository } from '../repository/SQLiteAssetRepository';
 import { SQLiteGenerationJobRepository } from '../repository/SQLiteGenerationJobRepository';
 import { SQLiteIntegrationRepository } from '../repository/SQLiteIntegrationRepository';
+import { Project } from '../../domain/project/Project';
+import { Scene } from '../../domain/scene/Scene';
 import { initializeDatabase } from '../persistence/sqlite/SQLiteProvider';
 
 describe('SQLite integration', () => {
@@ -20,10 +22,13 @@ describe('SQLite integration', () => {
 
   it('saves and loads a project', async () => {
     const repo = new SQLiteProjectRepository(db);
-    const project = { id: 'p1', name: 'stage show', status: 'active' as const };
+    const project = new Project({ id: 'p1', name: 'stage show', status: 'active' });
     await repo.save(project);
     const loaded = await repo.findById('p1');
-    expect(loaded).toEqual(project);
+    expect(loaded).toBeInstanceOf(Project);
+    expect(loaded?.id).toBe('p1');
+    expect(loaded?.name).toBe('stage show');
+    expect(loaded?.status).toBe('active');
   });
 
   it('saves and loads scenes', async () => {
