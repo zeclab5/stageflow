@@ -12,8 +12,8 @@ const RESPONSE_BASE = {
   status: 200,
 };
 
-function createMockResponse(data: unknown): Response {
-  const base = RESPONSE_BASE as Record<string, unknown>;
+function createMockResponse(data: unknown, ok = true, status = 200): Response {
+  const base = { ok, status } as Record<string, unknown>;
   return Object.assign(
     {
       json: async () => data,
@@ -36,12 +36,14 @@ describe('Web routes', () => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
       if (url.includes('/api/works/')) {
         const item = FIXTURE.works.find(w => url.endsWith(`/${w.slug}`));
-        return Promise.resolve(createMockResponse(item ?? FIXTURE.works));
+        if (!item) return Promise.resolve(createMockResponse(null, false, 404));
+        return Promise.resolve(createMockResponse(item));
       }
       if (url.includes('/api/works')) return Promise.resolve(createMockResponse(FIXTURE.works));
       if (url.includes('/api/blog/')) {
         const item = FIXTURE.blog.find(b => url.endsWith(`/${b.slug}`));
-        return Promise.resolve(createMockResponse(item ?? FIXTURE.blog));
+        if (!item) return Promise.resolve(createMockResponse(null, false, 404));
+        return Promise.resolve(createMockResponse(item));
       }
       if (url.includes('/api/blog')) return Promise.resolve(createMockResponse(FIXTURE.blog));
       if (url.includes('/api/plugins')) return Promise.resolve(createMockResponse(FIXTURE.plugins));
@@ -93,5 +95,25 @@ describe('Web routes', () => {
     const response = await request(app).get('/unknown');
     expect(response.status).toBe(404);
     expect(response.text).toContain('Not found');
+  });
+
+  it('GET /works/:slug returns 404 when missing', async () => {
+    const response = await request(app).get('/works/999');
+    expect(response.status).toBe(404);
+    expect(response.text).toContain('Not found');
+  });
+
+  it('GET /blog/:slug returns 404 when missing', async () => {
+    const response = await request(app).get('/blog/999');
+    expect(response.status).toBe(404);
+    expect(response.text).toContain('Not found');
+  });
+
+  it('Home page includes navigation links', async () => {
+    const response = await request(app).get('/');
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('/works');
+    expect(response.text).toContain('/blog');
+    expect(response.text).toContain('/plugins');
   });
 });
