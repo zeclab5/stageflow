@@ -1,6 +1,7 @@
 import express from 'express';
 
 const app = express();
+export { app };
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 const API_BASE = process.env.API_BASE || 'http://localhost:3101';
 
@@ -58,7 +59,7 @@ app.get('/works', async (_req, res) => {
 });
 
 app.get('/works/:slug', async (req, res) => {
-  const response = await fetch(`${API_BASE}/works/${req.params.slug}`);
+  const response = await fetch(`${API_BASE}/api/works/${req.params.slug}`);
   if (!response.ok) return res.status(404).send(layout('Not found', '<p>Not found</p>'));
   const data = await response.json();
   res.send(layout(data.title ?? `Work ${data.slug}`, `
@@ -72,7 +73,7 @@ app.get('/works/:slug', async (req, res) => {
 });
 
 app.get('/blog', async (_req, res) => {
-  const response = await fetch(`${API_BASE}/blog`);
+  const response = await fetch(`${API_BASE}/api/blog`);
   const data = await response.json();
   const body = data.map((item: { slug: string; title?: string; description?: string }) => `
     <article class="card">
@@ -84,7 +85,7 @@ app.get('/blog', async (_req, res) => {
 });
 
 app.get('/blog/:slug', async (req, res) => {
-  const response = await fetch(`${API_BASE}/blog/${req.params.slug}`);
+  const response = await fetch(`${API_BASE}/api/blog/${req.params.slug}`);
   if (!response.ok) return res.status(404).send(layout('Not found', '<p>Not found</p>'));
   const data = await response.json();
   const tags = Array.isArray(data.tags) ? data.tags.map((tag: string) => `<span style="border:1px solid #e5e7eb;border-radius:999px;padding:2px 10px;font-size:12px;margin-right:6px;color:#374151;">${tag}</span>`).join('') : '';
@@ -99,7 +100,7 @@ app.get('/blog/:slug', async (req, res) => {
 });
 
 app.get('/plugins', async (_req, res) => {
-  const response = await fetch(`${API_BASE}/plugins`);
+  const response = await fetch(`${API_BASE}/api/plugins`);
   const data = await response.json();
   res.send(layout('Plugins', `
     <section class="card">
@@ -115,4 +116,6 @@ app.get('/plugins', async (_req, res) => {
 
 app.use((_req, res) => res.status(404).send(layout('Not found', '<p>Not found</p>')));
 
-app.listen(PORT, () => console.log(`Web listening on http://localhost:${PORT}`));
+if (!process.env.JEST_WORKER_ID) {
+  app.listen(PORT, () => console.log(`Web listening on http://localhost:${PORT}`));
+}

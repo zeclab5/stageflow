@@ -3,7 +3,7 @@
   "parserOptions": {
     "project": "./tsconfig.json"
   },
-  "ignorePatterns": ["dist", "node_modules"],
+  "ignorePatterns": ["dist", "node_modules", "**/*.test.ts", "**/__tests__/**"],
   "plugins": ["@typescript-eslint"],
   "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"]
 }
