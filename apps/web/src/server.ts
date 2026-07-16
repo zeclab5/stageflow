@@ -525,29 +525,31 @@ app.get('/show-flow', async (_req, res) => {
         }
         async function load() {
           const projectId = projectEl.value.trim() || 'p1';
-          const [scenesRes, cuesRes, statusRes] = await Promise.all([
+          const [scenesRes, statusRes] = await Promise.all([
             fetch('${API_BASE}/scenes?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } }),
-            fetch('${API_BASE}/cues?sceneId=all&projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } }),
             fetch('${API_BASE}/api/playback/status', { headers: { 'x-api-key': 'test-api-key' } })
           ]);
           scenes = await scenesRes.json();
-          cues = await cuesRes.json();
           const status = await statusRes.json();
           statusEl.textContent = status.playing ? 'Playing' : 'Stopped';
           listEl.innerHTML = '';
           cueListEl.innerHTML = '';
-          for (const scene of scenes) {
+          const sceneCueMap = await Promise.all(scenes.map(async (scene: any) => {
+            const cueRes = await fetch('${API_BASE}/cues?sceneId=' + encodeURIComponent(scene.id), { headers: { 'x-api-key': 'test-api-key' } });
+            const cues = await cueRes.json();
+            return { scene, cues };
+          }));
+          for (const entry of sceneCueMap) {
             const li = document.createElement('li');
             li.className = 'card';
-            li.textContent = (activeSceneId === scene.id ? '▶ ' : '') + scene.name;
+            li.textContent = (activeSceneId === entry.scene.id ? '▶ ' : '') + entry.scene.name;
             li.style.cursor = 'pointer';
             li.addEventListener('click', async () => {
-              activeSceneId = scene.id;
-              await activate(scene.id);
+              activeSceneId = entry.scene.id;
+              await activate(entry.scene.id);
             });
             listEl.appendChild(li);
-            const sceneCues = cues.filter((c) => c.sceneId === scene.id);
-            for (const cue of sceneCues) {
+            for (const cue of entry.cues) {
               const cueLi = document.createElement('li');
               cueLi.className = 'card';
               cueLi.textContent = 'Cue: ' + cue.name;
@@ -558,7 +560,7 @@ app.get('/show-flow', async (_req, res) => {
               cueListEl.appendChild(cueLi);
             }
           }
-          currentEl.textContent = activeSceneId ? ('Active: ' + (scenes.find((s) => s.id === activeSceneId)?.name ?? activeSceneId)) : 'No active scene.';
+          currentEl.textContent = activeSceneId ? ('Active: ' + (scenes.find((s: any) => s.id === activeSceneId)?.name ?? activeSceneId)) : 'No active scene.';
           await loadRender();
         }
         async function activate(id) {
@@ -597,9 +599,10 @@ app.get('/show-flow', async (_req, res) => {
         stopAdvanceBtn.id = 'stop-advance';
         stopAdvanceBtn.textContent = 'Stop Auto';
         stopAdvanceBtn.style.padding = '8px 12px';
-        document.querySelector('#' + projects[0]?.id + ' #project-id').parentElement.insertBefore(advanceMsInput, document.getElementById('reload').nextSibling);
-        document.querySelector('#' + projects[0]?.id + ' #project-id').parentElement.insertBefore(advanceBtn, document.getElementById('reload').nextSibling);
-        document.querySelector('#' + projects[0]?.id + ' #project-id').parentElement.insertBefore(stopAdvanceBtn, document.getElementById('reload').nextSibling);
+        const controlsEl = document.getElementById('reload').parentElement;
+        controlsEl.insertBefore(advanceMsInput, document.getElementById('reload').nextSibling);
+        controlsEl.insertBefore(advanceBtn, document.getElementById('reload').nextSibling);
+        controlsEl.insertBefore(stopAdvanceBtn, document.getElementById('reload').nextSibling);
         let advanceTimer = null;
         function scheduleAdvance() {
           if (advanceTimer) clearInterval(advanceTimer);
