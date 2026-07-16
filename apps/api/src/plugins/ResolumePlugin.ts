@@ -1,25 +1,44 @@
 import { Plugin, PluginConfig, PluginDescriptor } from 'stageflow-core';
 
-export interface ResolumePluginOptions {
+export interface ResolumeApiOptions {
   host?: string;
   port?: number;
+  name?: string;
 }
 
 export class ResolumePlugin implements Plugin {
-  readonly name = 'resolume';
+  readonly name: string;
+  private readonly baseUrl: string;
 
-  constructor(private readonly options: ResolumePluginOptions) {}
+  constructor(options: ResolumeApiOptions = {}) {
+    const host = options.host ?? '127.0.0.1';
+    const port = options.port ?? 8080;
+    this.baseUrl = `http://${host}:${port}/api/v1`;
+    this.name = options.name ?? 'resolume';
+  }
 
   async init(): Promise<void> {
-    console.log('resolume plugin init', this.options);
+    const result = await this.status();
+    if (!result.startsWith('status=')) {
+      throw new Error(`resolume not ready: ${result}`);
+    }
   }
 
   async shutdown(): Promise<void> {
     console.log('resolume plugin shutdown');
   }
 
+  async status(): Promise<string> {
+    try {
+      const res = await fetch(`${this.baseUrl}/composition/list_composition`, { signal: AbortSignal.timeout(2000) });
+      return `status=${res.status}`;
+    } catch (err) {
+      return `failed=${String(err).slice(0, 100)}`;
+    }
+  }
+
   connect() {
-    return `connected:${this.options.host ?? '127.0.0.1'}:${this.options.port ?? 8080}`;
+    return this.baseUrl;
   }
 }
 
@@ -31,7 +50,11 @@ export const resolumePluginDescriptor: PluginDescriptor = {
     category: 'integration'
   },
   create: async (config?: PluginConfig) => {
-    const opts = (config as ResolumePluginOptions | undefined) ?? {};
-    return new ResolumePlugin({ host: opts.host as string | undefined, port: (opts.port as number | undefined) });
+    const opts = (config as ResolumeApiOptions | undefined) ?? {};
+    return new ResolumePlugin({
+      host: opts.host as string | undefined,
+      port: opts.port as number | undefined,
+      name: opts.name as string | undefined,
+    });
   }
 };

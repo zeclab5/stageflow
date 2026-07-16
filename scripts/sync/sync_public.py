@@ -5,11 +5,11 @@ from __future__ import annotations
 
 import json
 import sys
-from collections.abc import Iterable
 from pathlib import Path
 
 PUBLIC = Path("public")
 ALLOWED_DIRS = {"works", "blog"}
+REPORT_DEFAULT = Path(".stageflow-sync-report.json")
 
 
 def ensure_structure() -> list[Path]:
@@ -51,25 +51,39 @@ def validate_meta_shapes(data: dict[str, object]) -> list[dict[str, object]]:
   return issues
 
 
-def synchronize(report: bool = False) -> dict[str, object]:
+def write_report(result: dict[str, object], path: Path = REPORT_DEFAULT) -> Path:
+  path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+  return path
+
+
+def synchronize(report: bool = True, report_path: Path = REPORT_DEFAULT) -> dict[str, object]:
   ensure_structure()
   works = scan_meta_dirs(PUBLIC / "content" / "works")
   blog = scan_meta_dirs(PUBLIC / "content" / "blog")
   issues = validate_meta_shapes({"works": works, "blog": blog})
-  return {
+  result = {
     "works_count": len(works),
     "blog_count": len(blog),
     "issues_count": len(issues),
     "issues": issues,
   }
+  if report:
+    write_report(result, report_path)
+    result["report"] = str(report_path)
+  return result
 
 
 def main() -> int:
   args = sys.argv[1:]
   if not args or args[0] in {"--help", "-h"}:
-    print("usage: sync_public.py [--report]")
+    print("usage: sync_public.py [--no-report] [--report-path=...]")
     return 0
-  result = synchronize(report="--report" in args)
+  report = "--no-report" not in args
+  report_path = REPORT_DEFAULT
+  for arg in args:
+    if arg.startswith("--report-path="):
+      report_path = Path(arg.split("=", 1)[1])
+  result = synchronize(report=report, report_path=report_path)
   print(json.dumps(result, ensure_ascii=False, indent=2))
   return 0
 

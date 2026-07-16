@@ -58,19 +58,21 @@ app.get('/works', async (_req, res) => {
 });
 
 app.get('/works/:slug', async (req, res) => {
-  const response = await fetch(`${API_BASE}/api/works/${req.params.slug}`);
+  const response = await fetch(`${API_BASE}/works/${req.params.slug}`);
   if (!response.ok) return res.status(404).send(layout('Not found', '<p>Not found</p>'));
   const data = await response.json();
-  res.send(layout('Work ' + (data.slug ?? ''), `
+  res.send(layout(data.title ?? `Work ${data.slug}`, `
     <article class="card">
       <h2>${data.title ?? data.slug}</h2>
-      <pre>${JSON.stringify(data, null, 2)}</pre>
+      <p class="muted">${data.date ? data.date + ' · ' : ''}${[data.client, data.description].filter(Boolean).join(' | ')}</p>
+      ${data.thumbnail ? `<div style="margin-top:12px"><img src="${data.thumbnail}" alt="${data.title ?? ''}" style="max-width:100%;border-radius:12px;border:1px solid #e5e7eb;" /></div>` : ''}
+      ${data.description ? `<p style="margin-top:12px">${data.description}</p>` : ''}
     </article>
   `));
 });
 
 app.get('/blog', async (_req, res) => {
-  const response = await fetch(`${API_BASE}/api/blog`);
+  const response = await fetch(`${API_BASE}/blog`);
   const data = await response.json();
   const body = data.map((item: { slug: string; title?: string; description?: string }) => `
     <article class="card">
@@ -82,19 +84,22 @@ app.get('/blog', async (_req, res) => {
 });
 
 app.get('/blog/:slug', async (req, res) => {
-  const response = await fetch(`${API_BASE}/api/blog/${req.params.slug}`);
+  const response = await fetch(`${API_BASE}/blog/${req.params.slug}`);
   if (!response.ok) return res.status(404).send(layout('Not found', '<p>Not found</p>'));
   const data = await response.json();
-  res.send(layout('Blog ' + (data.slug ?? ''), `
+  const tags = Array.isArray(data.tags) ? data.tags.map((tag: string) => `<span style="border:1px solid #e5e7eb;border-radius:999px;padding:2px 10px;font-size:12px;margin-right:6px;color:#374151;">${tag}</span>`).join('') : '';
+  res.send(layout(data.title ?? `Blog ${data.slug}`, `
     <article class="card">
       <h2>${data.title ?? data.slug}</h2>
-      <pre>${JSON.stringify(data, null, 2)}</pre>
+      <p class="muted">${data.date ? data.date + ' · ' : ''}${data.description ?? ''}</p>
+      ${data.description ? `<p style="margin-top:12px">${data.description}</p>` : ''}
+      ${tags ? `<div style="margin-top:12px">${tags}</div>` : ''}
     </article>
   `));
 });
 
 app.get('/plugins', async (_req, res) => {
-  const response = await fetch(`${API_BASE}/api/plugins`);
+  const response = await fetch(`${API_BASE}/plugins`);
   const data = await response.json();
   res.send(layout('Plugins', `
     <section class="card">
