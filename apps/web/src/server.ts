@@ -731,27 +731,85 @@ app.get('/inspector', async (_req, res) => {
     <section class="card">
       <h2>Inspector</h2>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <input id="inspector-kind" placeholder="kind: project/scene/asset" value="${kind}" style="padding:8px 12px;" />
+        <input id="inspector-kind" placeholder="kind: project/scene/asset/screen" value="${kind}" style="padding:8px 12px;" />
         <input id="inspector-id" placeholder="id" value="${id}" style="padding:8px 12px;" />
         <button id="inspect" style="padding:8px 12px;">Inspect</button>
       </div>
-      <pre id="inspector-result" class="muted" style="margin-top:12px;">Select kind and id.</pre>
+      <div id="inspector-panels" style="margin-top:12px;display:flex;flex-direction:column;gap:12px;"></div>
     </section>
     <script>
       (async () => {
         const kindEl = document.getElementById('inspector-kind');
         const idEl = document.getElementById('inspector-id');
-        const resultEl = document.getElementById('inspector-result');
+        const panelsEl = document.getElementById('inspector-panels');
         async function run() {
           const kind = kindEl.value.trim();
           const id = idEl.value.trim();
+          panelsEl.innerHTML = '';
           if (!kind || !id) {
-            resultEl.textContent = 'kind and id required';
+            panelsEl.innerHTML = '<p class="muted">kind and id required</p>';
             return;
           }
-          const r = await fetch('${API_BASE}/inspector/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id), { headers: { 'x-api-key': 'test-api-key' } });
-          const data = await r.json();
-          resultEl.textContent = JSON.stringify(data, null, 2);
+          const base = '${API_BASE}';
+          const headers = { 'x-api-key': 'test-api-key' };
+          try {
+            const summary = await fetch(base + '/inspector/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id), { headers }).then(r => r.json());
+            const summaryCard = document.createElement('div');
+            summaryCard.className = 'card';
+            summaryCard.innerHTML = '<h3>' + kind.charAt(0).toUpperCase() + kind.slice(1) + '</h3><pre style="margin-top:8px;">' + JSON.stringify(summary, null, 2) + '</pre>';
+            panelsEl.appendChild(summaryCard);
+            if (kind === 'project') {
+              const projectId = summary.id || id;
+              const [scenesRes, assetsRes, runsRes, statusRes] = await Promise.all([
+                fetch(base + '/scenes?projectId=' + encodeURIComponent(projectId), { headers }),
+                fetch(base + '/assets?projectId=' + encodeURIComponent(projectId), { headers }),
+                fetch(base + '/api/pipeline/runs?projectId=' + encodeURIComponent(projectId), { headers }),
+                fetch(base + '/api/playback/status', { headers })
+              ]);
+              const scenes = await scenesRes.json();
+              const assets = await assetsRes.json();
+              const runs = await runsRes.json();
+              const status = await statusRes.json();
+              const metaCard = document.createElement('div');
+              metaCard.className = 'card';
+              metaCard.innerHTML = '<h3>Project Resources</h3>' +
+                '<p class="muted">Scenes: ' + (Array.isArray(scenes) ? scenes.length : 0) + '</p>' +
+                '<p class="muted">Assets: ' + (Array.isArray(assets) ? assets.length : 0) + '</p>' +
+                '<p class="muted">Playback: ' + (status.playing ? 'Playing' : 'Stopped') + '</p>';
+              panelsEl.appendChild(metaCard);
+              const pipelineCard = document.createElement('div');
+              pipelineCard.className = 'card';
+              pipelineCard.innerHTML = '<h3>Pipeline Runs</h3><pre style="margin-top:8px;">' + JSON.stringify(runs, null, 2) + '</pre>';
+              panelsEl.appendChild(pipelineCard);
+            }
+            if (kind === 'scene') {
+              const projectId = (summary.projectId as string) || 'p1';
+              const renderRes = await fetch(base + '/api/render/scene/' + encodeURIComponent(id) + '?projectId=' + encodeURIComponent(projectId), { headers });
+              const data = await renderRes.json();
+              const card = document.createElement('div');
+              card.className = 'card';
+              const treeText = JSON.stringify(data, null, 2);
+              card.innerHTML = '<h3>Render Tree</h3><pre style="margin-top:8px;">' + treeText + '</pre>';
+              panelsEl.appendChild(card);
+              if (data.trees?.length) {
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:8px;';
+                for (const tree of data.trees) {
+                  const preview = document.createElement('div');
+                  preview.style.cssText = 'background:#0b1220;border-radius:12px;border:1px solid #1f2937;padding:8px;';
+                  preview.innerHTML = '<div style="color:#e5e7eb;font-size:12px;margin-bottom:6px;">' + tree.screenId + '</div>' + tree.objects.map((o: any) => '<div style="display:flex;align-items:center;gap:6px;margin-top:6px;"><div style="width:32px;height:32px;background:#2563eb;border:1px solid #e5e7eb;border-radius:8px;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;">' + o.assetId + '</div><span style="color:#e2e8f0;font-size:12px;">' + Math.round(o.width) + 'x' + Math.round(o.height) + ' @ ' + Math.round(o.x) + ',' + Math.round(o.y) + '</span></div>').join('');
+                  wrapper.appendChild(preview);
+                }
+                const vizCard = document.createElement('div');
+                vizCard.className = 'card';
+                vizCard.innerHTML = '<h3>Render Preview</h3>';
+                vizCard.appendChild(wrapper);
+                panelsEl.appendChild(vizCard);
+              }
+            }
+          } catch (e) {
+            panelsEl.innerHTML = '<pre>Error: ' + e.message + '</pre>';
+          }
         }
         document.getElementById('inspect').addEventListener('click', run);
         if ('${kind}' && '${id}') await run();
