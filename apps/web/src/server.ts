@@ -406,6 +406,7 @@ app.get('/library', async (_req, res) => {
     </section>
     <section class="card">
       <h2>Assets</h2>
+      <div id="asset-preview" class="muted" style="margin-top:8px;">Select an asset.</div>
       <ul id="asset-list" style="list-style:none;padding:0;margin-top:12px;"></ul>
     </section>
     <script>
@@ -433,10 +434,15 @@ app.get('/library', async (_req, res) => {
           const res = await fetch('${API_BASE}/assets?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
           const assets = await res.json();
           listEl.innerHTML = '';
+          const previewEl = document.getElementById('asset-preview');
           for (const asset of assets) {
             const li = document.createElement('li');
             li.className = 'card';
             li.innerHTML = '<strong>' + asset.name + '</strong> <span class="muted">' + asset.type + '</span>';
+            li.style.cursor = 'pointer';
+            li.addEventListener('click', () => {
+              previewEl.innerHTML = '<strong>' + asset.name + '</strong><br><span class="muted">' + asset.type + '</span><br><code>' + asset.uri + '</code>';
+            });
             listEl.appendChild(li);
           }
         }
@@ -499,6 +505,7 @@ app.get('/show-flow', async (_req, res) => {
         let activeSceneId = null;
         let cues = [];
         const previewEl = document.getElementById('preview-grid');
+        const storageKey = 'showflow-active-' + projectId;
         async function loadRender() {
           if (!activeSceneId) {
             previewEl.innerHTML = '';
@@ -559,6 +566,11 @@ app.get('/show-flow', async (_req, res) => {
           scenes = await scenesRes.json();
           const status = await statusRes.json();
           statusEl.textContent = status.playing ? 'Playing' : 'Stopped';
+          if (!activeSceneId && scenes.length) {
+            activeSceneId = localStorage.getItem(storageKey) || scenes[0].id;
+          } else if (activeSceneId && !scenes.find((s: any) => s.id === activeSceneId)) {
+            activeSceneId = scenes[0]?.id || null;
+          }
           listEl.innerHTML = '';
           cueListEl.innerHTML = '';
           const sceneCueMap = await Promise.all(scenes.map(async (scene: any) => {
@@ -592,6 +604,8 @@ app.get('/show-flow', async (_req, res) => {
         }
         async function activate(id) {
           const projectId = projectEl.value.trim() || 'p1';
+          activeSceneId = id;
+          localStorage.setItem(storageKey, String(id));
           await fetch('${API_BASE}/scenes/' + encodeURIComponent(id) + '/activate?projectId=' + encodeURIComponent(projectId), {
             method: 'POST',
             headers: { 'x-api-key': 'test-api-key' }
