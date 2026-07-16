@@ -98,12 +98,86 @@ app.get('/scenes', async (_req, res) => {
             li.addEventListener('click', async () => {
               const r = await fetch('${API_BASE}/scenes/' + scene.id, { headers: { 'x-api-key': 'test-api-key' } });
               const data = await r.json();
-              detailEl.textContent = JSON.stringify(data, null, 2);
+              detailEl.innerHTML = '<a href="/scenes/' + scene.id + '">Open Canvas</a><br><pre>' + JSON.stringify(data, null, 2) + '</pre>';
             });
             listEl.appendChild(li);
           }
         }
         await load();
+      })();
+    </script>
+  `));
+});
+
+app.get('/scenes/:id', async (req, res) => {
+  const sceneRes = await fetch(`${API_BASE}/scenes/${req.params.id}`);
+  if (!sceneRes.ok) return res.status(404).send(layout('Not found', '<p>Not found</p>'));
+  const scene = await sceneRes.json();
+  res.send(layout('Scene: ' + scene.name, `
+    <section class="card">
+      <h2>${scene.name}</h2>
+      <p class="muted">Project ${scene.projectId} · Order ${scene.order}${scene.active ? ' · Active' : ''}</p>
+      <div id="canvas" style="position:relative;width:100%;aspect-ratio:16/9;background:#0b1220;border-radius:12px;overflow:hidden;border:1px solid #1f2937;"></div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button id="add-image" style="padding:8px 12px;">Add Image Asset</button>
+        <input id="asset-x" placeholder="x" style="width:70px" />
+        <input id="asset-y" placeholder="y" style="width:70px" />
+        <input id="asset-w" placeholder="w" style="width:70px" />
+        <input id="asset-h" placeholder="h" style="width:70px" />
+      </div>
+      <h3 style="margin-top:12px;">Objects</h3>
+      <ul id="object-list" style="list-style:none;padding:0;margin-top:8px;"></ul>
+    </section>
+    <script>
+      (async () => {
+        const canvasEl = document.getElementById('canvas');
+        const listEl = document.getElementById('object-list');
+        const projectId = '${scene.projectId}';
+        async function loadObjects() {
+          const r = await fetch('${API_BASE}/scenes/${req.params.id}/objects', { headers: { 'x-api-key': 'test-api-key' } });
+          const objects = await r.json();
+          listEl.innerHTML = '';
+          canvasEl.innerHTML = '';
+          for (const object of objects) {
+            const assetRes = await fetch('${API_BASE}/assets/' + object.assetId + '?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
+            const asset = assetRes.ok ? await assetRes.json() : {};
+            const el = document.createElement('div');
+            el.textContent = asset.name || object.assetId;
+            el.style.position = 'absolute';
+            el.style.left = object.x + 'px';
+            el.style.top = object.y + 'px';
+            el.style.width = object.width + 'px';
+            el.style.height = object.height + 'px';
+            el.style.background = asset.type === 'image' ? '#334155' : '#2563eb';
+            el.style.borderRadius = '12px';
+            el.style.border = '1px solid #e5e7eb';
+            el.style.color = '#fff';
+            el.style.display = 'flex';
+            el.style.alignItems = 'center';
+            el.style.justifyContent = 'center';
+            el.style.fontSize = '12px';
+            canvasEl.appendChild(el);
+            const li = document.createElement('li');
+            li.className = 'card';
+            li.textContent = asset.name || object.assetId + ' (' + object.x + ',' + object.y + ')';
+            listEl.appendChild(li);
+          }
+        }
+        document.getElementById('add-image').addEventListener('click', async () => {
+          const createRes = await fetch('${API_BASE}/assets?projectId=' + encodeURIComponent(projectId), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
+            body: JSON.stringify({ name: 'Image ' + (listEl.children.length + 1), type: 'image', uri: '/tmp/image.png' })
+          });
+          const asset = await createRes.json();
+          await fetch('${API_BASE}/scenes/${req.params.id}/assets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
+            body: JSON.stringify({ assetId: asset.id, x: document.getElementById('asset-x').value || 0, y: document.getElementById('asset-y').value || 0, width: document.getElementById('asset-w').value || 200, height: document.getElementById('asset-h').value || 200 })
+          });
+          loadObjects();
+        });
+        await loadObjects();
       })();
     </script>
   `));
@@ -264,14 +338,21 @@ app.get('/show-flow', async (_req, res) => {
             li.className = 'card';
             li.textContent = (activeSceneId === scene.id ? '▶ ' : '') + scene.name;
             li.style.cursor = 'pointer';
-            li.addEventListener('click', () => {
+            li.addEventListener('click', async () => {
               activeSceneId = scene.id;
-              statusEl.textContent = 'Active: ' + scene.name;
-              render();
+              await activate(scene.id);
             });
             listEl.appendChild(li);
           }
           currentEl.textContent = activeSceneId ? ('Active: ' + (scenes.find((s) => s.id === activeSceneId)?.name ?? activeSceneId)) : 'No active scene.';
+        }
+        async function activate(id) {
+          await fetch('${API_BASE}/scenes/' + encodeURIComponent(id) + '/activate?projectId=' + encodeURIComponent(projectId), {
+            method: 'POST',
+            headers: { 'x-api-key': 'test-api-key' }
+          });
+          statusEl.textContent = 'Active';
+          render();
         }
         function render() { load(); }
         document.getElementById('activate-scene').addEventListener('click', async () => {
@@ -279,24 +360,21 @@ app.get('/show-flow', async (_req, res) => {
             statusEl.textContent = 'Select a scene first.';
             return;
           }
-          statusEl.textContent = 'Active: ' + (scenes.find((s) => s.id === activeSceneId)?.name ?? activeSceneId);
-          render();
+          await activate(activeSceneId);
         });
         document.getElementById('next-scene').addEventListener('click', async () => {
           if (!scenes.length) return;
           const idx = scenes.findIndex((s) => s.id === activeSceneId);
           const next = scenes[(idx + 1) % scenes.length];
           activeSceneId = next.id;
-          statusEl.textContent = 'Active: ' + next.name;
-          render();
+          await activate(next.id);
         });
         document.getElementById('prev-scene').addEventListener('click', async () => {
           if (!scenes.length) return;
           const idx = scenes.findIndex((s) => s.id === activeSceneId);
           const prev = scenes[(idx - 1 + scenes.length) % scenes.length];
           activeSceneId = prev.id;
-          statusEl.textContent = 'Active: ' + prev.name;
-          render();
+          await activate(prev.id);
         });
         await load();
       })();

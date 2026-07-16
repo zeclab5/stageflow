@@ -31,6 +31,23 @@ router.delete('/:id', async (req, res) => {
   res.status(204).send();
 });
 
+router.post('/:id/activate', async (req, res) => {
+  const projectId = req.query.projectId as string;
+  await service().activate(projectId, req.params.id);
+  res.status(204).send();
+});
+
+router.get('/:id', async (req, res) => {
+  const scene = await service().get(req.params.id);
+  if (!scene) return res.status(404).json({ error: 'not found' });
+  res.json(scene);
+});
+
+router.post('/:id/assets', async (req, res) => {
+  const object = await service().placeObject(req.params.id, req.body);
+  res.status(201).json(object);
+});
+
 router.get('/:id/objects', async (req, res) => {
   const repo = container.resolve<SQLiteSceneObjectRepository>('SQLiteSceneObjectRepository');
   const objects = await repo.listByScene(req.params.id);
