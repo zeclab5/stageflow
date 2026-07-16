@@ -30,6 +30,7 @@ const layout = (title: string, body: string) => `<!doctype html>
       <h1>StageFlow</h1>
       <nav>
         <a href="/">Home</a>
+        <a href="/projects">Projects</a>
         <a href="/scenes">Scenes</a>
         <a href="/screens">Screens</a>
         <a href="/show-flow">Show Flow</a>
@@ -51,6 +52,100 @@ app.get('/', (_req, res) => {
       <h2>Welcome</h2>
       <p class="muted">Plugin-first stage production platform.</p>
     </section>
+  `));
+});
+
+app.get('/projects', async (_req, res) => {
+  res.send(layout('Projects', `
+    <section class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h2>Projects</h2>
+        <button id="new-project" style="padding:8px 14px;">New Project</button>
+      </div>
+      <ul id="project-list" style="list-style:none;padding:0;margin-top:12px;"></ul>
+    </section>
+    <section class="card">
+      <h2>Project Details</h2>
+      <div id="project-form" style="display:flex;flex-direction:column;gap:8px;max-width:420px;">
+        <input id="project-name" placeholder="Project name" style="padding:8px 12px;" />
+        <select id="project-status" style="padding:8px 12px;">
+          <option value="draft">Draft</option>
+          <option value="active">Active</option>
+          <option value="closed">Closed</option>
+        </select>
+        <div style="display:flex;gap:8px;">
+          <button id="save-project" style="padding:8px 14px;">Save</button>
+          <button id="close-project" style="padding:8px 14px;">Close</button>
+          <button id="delete-project" style="padding:8px 14px;">Delete</button>
+        </div>
+      </div>
+      <pre id="project-detail" class="muted" style="margin-top:12px;">Select a project.</pre>
+    </section>
+    <script>
+      (async () => {
+        const listEl = document.getElementById('project-list');
+        const detailEl = document.getElementById('project-detail');
+        let selectedId = null;
+        document.getElementById('new-project').addEventListener('click', async () => {
+          const name = document.getElementById('project-name').value || 'New Project';
+          const created = await fetch('${API_BASE}/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
+            body: JSON.stringify({ name })
+          });
+          const json = await created.json();
+          document.getElementById('project-name').value = '';
+          detailEl.textContent = 'Created ' + json.id;
+          load();
+        });
+        document.getElementById('save-project').addEventListener('click', async () => {
+          if (!selectedId) return;
+          const name = document.getElementById('project-name').value || 'Untitled';
+          const status = document.getElementById('project-status').value;
+          const res = await fetch('${API_BASE}/projects/' + selectedId, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
+            body: JSON.stringify({ name, status })
+          });
+          const json = await res.json();
+          detailEl.textContent = JSON.stringify(json, null, 2);
+          load();
+        });
+        document.getElementById('close-project').addEventListener('click', async () => {
+          if (!selectedId) return;
+          const res = await fetch('${API_BASE}/projects/' + selectedId + '/close', { method: 'POST', headers: { 'x-api-key': 'test-api-key' } });
+          const json = await res.json();
+          detailEl.textContent = JSON.stringify(json, null, 2);
+          load();
+        });
+        document.getElementById('delete-project').addEventListener('click', async () => {
+          if (!selectedId) return;
+          await fetch('${API_BASE}/projects/' + selectedId, { method: 'DELETE', headers: { 'x-api-key': 'test-api-key' } });
+          selectedId = null;
+          detailEl.textContent = 'Deleted.';
+          load();
+        });
+        async function load() {
+          const res = await fetch('${API_BASE}/projects', { headers: { 'x-api-key': 'test-api-key' } });
+          const items = await res.json();
+          listEl.innerHTML = '';
+          for (const project of items) {
+            const li = document.createElement('li');
+            li.className = 'card';
+            li.textContent = project.name + ' [' + (project.status || 'draft') + ']';
+            li.style.cursor = 'pointer';
+            li.addEventListener('click', () => {
+              selectedId = project.id;
+              document.getElementById('project-name').value = project.name || '';
+              document.getElementById('project-status').value = project.status || 'draft';
+              detailEl.textContent = JSON.stringify(project, null, 2);
+            });
+            listEl.appendChild(li);
+          }
+        }
+        await load();
+      })();
+    </script>
   `));
 });
 
