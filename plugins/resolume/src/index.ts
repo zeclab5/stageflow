@@ -1,10 +1,10 @@
-import { Plugin, PluginDescriptor, PluginConfig } from 'stageflow-core';
+import { Plugin, PluginConfig, PluginDescriptor } from 'stageflow-core';
 
 export interface ResolumePluginOptions {
-  host?: string;
-  port?: number;
-  baseUrl?: string;
-  name?: string;
+  readonly host?: string;
+  readonly port?: number;
+  readonly baseUrl?: string;
+  readonly name?: string;
 }
 
 export class ResolumePlugin implements Plugin {
