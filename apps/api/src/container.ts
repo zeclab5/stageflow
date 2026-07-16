@@ -1,10 +1,8 @@
 import { existsSync, unlinkSync } from 'fs';
-import { DIContainer } from 'stageflow-core';
+import { DIContainer, PluginRegistry, initializeDatabase } from 'stageflow-core';
 import { SQLiteProjectRepository, SQLiteSceneRepository, SQLitePromptRepository, SQLiteAssetRepository, SQLiteGenerationJobRepository, SQLiteIntegrationRepository, SQLiteCueRepository, SQLiteScreenRepository, SQLiteSceneObjectRepository } from 'stageflow-core';
 import { ProjectService, SceneService, PromptService, AssetService, GenerationService, IntegrationService, CueService, ScreenService, SceneObjectService } from 'stageflow-core';
-import { PluginRegistry } from 'stageflow-core';
 import { healthPluginDescriptor } from './plugins/HealthPlugin';
-import { initializeDatabase } from 'stageflow-core';
 
 export const container = new DIContainer();
 export const pluginRegistry = new PluginRegistry();

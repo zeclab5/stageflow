@@ -9,8 +9,9 @@ const API_BASE = process.env.API_BASE || SELF;
 
 process.on('unhandledRejection', (reason) => { console.error('Web unhandledRejection', reason); });
 process.on('uncaughtException', (error) => { console.error('Web uncaughtException', error); process.exit(1); });
-process.on('SIGTERM', () => process.exit(0));
-process.on('SIGINT', () => process.exit(0));
+process.on('SIGTERM', () => { console.log('Web SIGTERM'); process.exit(0); });
+process.on('SIGINT', () => { console.log('Web SIGINT'); process.exit(0); });
+process.on('exit', (code) => { console.log('Web exit', code); });
 
 app.use(express.static('public'));
 
