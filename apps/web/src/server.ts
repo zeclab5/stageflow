@@ -366,25 +366,26 @@ app.get('/show-flow', async (_req, res) => {
         let activeSceneId = null;
         let cues = [];
         const previewEl = document.getElementById('preview');
-        async function loadObjects() {
+        async function loadRender() {
           if (!activeSceneId) {
             previewEl.innerHTML = '';
             return;
           }
-          const r = await fetch('${API_BASE}/scenes/' + encodeURIComponent(activeSceneId) + '/objects', { headers: { 'x-api-key': 'test-api-key' } });
-          const objects = await r.json();
+          const projectId = projectEl.value.trim() || 'p1';
+          const r = await fetch('${API_BASE}/api/render/scene/' + encodeURIComponent(activeSceneId) + '?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
+          const data = await r.json();
           previewEl.innerHTML = '';
-          for (const object of objects) {
-            const assetRes = await fetch('${API_BASE}/assets/' + object.assetId + '?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
-            const asset = assetRes.ok ? await assetRes.json() : {};
+          if (!data?.trees?.length) return;
+          const tree = data.trees[0];
+          for (const object of tree.objects) {
             const el = document.createElement('div');
-            el.textContent = asset.name || object.assetId;
+            el.textContent = object.assetId;
             el.style.position = 'absolute';
             el.style.left = object.x + 'px';
             el.style.top = object.y + 'px';
             el.style.width = object.width + 'px';
             el.style.height = object.height + 'px';
-            el.style.background = asset.type === 'image' ? '#334155' : '#2563eb';
+            el.style.background = '#2563eb';
             el.style.borderRadius = '12px';
             el.style.border = '1px solid #e5e7eb';
             el.style.color = '#fff';
@@ -392,6 +393,7 @@ app.get('/show-flow', async (_req, res) => {
             el.style.alignItems = 'center';
             el.style.justifyContent = 'center';
             el.style.fontSize = '12px';
+            el.style.opacity = object.visible ? object.opacity : '0';
             previewEl.appendChild(el);
           }
         }
@@ -431,7 +433,7 @@ app.get('/show-flow', async (_req, res) => {
             }
           }
           currentEl.textContent = activeSceneId ? ('Active: ' + (scenes.find((s) => s.id === activeSceneId)?.name ?? activeSceneId)) : 'No active scene.';
-          await loadObjects();
+          await loadRender();
         }
         async function activate(id) {
           const projectId = projectEl.value.trim() || 'p1';

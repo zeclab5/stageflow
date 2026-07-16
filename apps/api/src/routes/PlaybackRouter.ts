@@ -1,27 +1,52 @@
 import { Router, Request, Response } from 'express';
-import { SQLiteCueRepository, SQLiteSceneRepository, eventBus, initializeDatabase } from 'stageflow-core';
+import { MultiScreenRenderer, SQLiteCueRepository, SQLiteSceneRepository, SQLiteSceneObjectRepository, SQLiteScreenRepository, eventBus, initializeDatabase } from 'stageflow-core';
 import { container } from '../container';
 
 const router = Router();
+const renderer = new MultiScreenRenderer();
 const cueRepo = (): SQLiteCueRepository => container.resolve<SQLiteCueRepository>('SQLiteCueRepository');
 const sceneRepo = (): SQLiteSceneRepository => container.resolve<SQLiteSceneRepository>('SQLiteSceneRepository');
+const objectRepo = (): SQLiteSceneObjectRepository => container.resolve<SQLiteSceneObjectRepository>('SQLiteSceneObjectRepository');
+const screenRepo = (): SQLiteScreenRepository => container.resolve<SQLiteScreenRepository>('SQLiteScreenRepository');
 
-const state = { projectId: 'p1', activeCueId: null as string | null, startedAt: null as Date | null };
-const playback = () => state;
+const playbackState = { projectId: 'p1', activeCueId: null as string | null, startedAt: null as Date | null };
+
+router.get('/status', async (_req: Request, res: Response) => {
+  res.json({ playing: Boolean(playbackState.activeCueId), projectId: playbackState.projectId });
+});
 
 router.post('/start', async (req: Request, res: Response) => {
-  state.projectId = (req.body.projectId as string) || 'p1';
-  state.activeCueId = null;
-  state.startedAt = new Date();
-  await eventBus.publish({ occurredAt: state.startedAt, eventType: 'PlaybackStarted' });
+  playbackState.projectId = (req.body.projectId as string) || 'p1';
+  playbackState.activeCueId = null;
+  playbackState.startedAt = new Date();
+  await eventBus.publish({ occurredAt: new Date(), eventType: 'PlaybackStarted' });
   res.status(204).send();
 });
 
-router.post('/stop', async (req: Request, res: Response) => {
-  state.activeCueId = null;
-  state.startedAt = null;
+router.post('/stop', async (_req: Request, res: Response) => {
+  playbackState.activeCueId = null;
+  playbackState.startedAt = null;
   await eventBus.publish({ occurredAt: new Date(), eventType: 'PlaybackStopped' });
   res.status(204).send();
+});
+
+router.post('/advance', async (req: Request, res: Response) => {
+  const projectId = playbackState.projectId;
+  const current = playbackState.activeCueId ? await cueRepo().findById(playbackState.activeCueId) : null;
+  const sceneId = (req.body.sceneId as string) || current?.sceneId;
+  const candidates = sceneId ? await cueRepo().listByScene(sceneId) : [];
+  const activeIndex = current ? candidates.findIndex((c) => c.id === current.id) : -1;
+  const next = candidates[(activeIndex + 1) % candidates.length] || current || candidates[0];
+  if (!next) return res.status(404).json({ error: 'no cues' });
+  const scene = await sceneRepo().findById(next.sceneId);
+  if (!scene) return res.status(404).json({ error: 'scene not found' });
+  playbackState.activeCueId = next.id;
+  playbackState.projectId = scene.projectId;
+  const objects = await objectRepo().listByScene(scene.id);
+  const screens = await screenRepo().listByProject(projectId);
+  const renderTree = renderer.buildTrees(objects, screens, scene.id);
+  await eventBus.publish({ occurredAt: new Date(), eventType: 'CueTriggered' });
+  res.json({ cue: next, scene, renderTree });
 });
 
 router.post('/cues/:id/trigger', async (req: Request, res: Response) => {
@@ -29,34 +54,13 @@ router.post('/cues/:id/trigger', async (req: Request, res: Response) => {
   if (!cue) return res.status(404).json({ error: 'not found' });
   const scene = await sceneRepo().findById(cue.sceneId);
   if (!scene) return res.status(404).json({ error: 'scene not found' });
-  state.projectId = scene.projectId;
-  state.activeCueId = cue.id;
+  playbackState.projectId = scene.projectId;
+  playbackState.activeCueId = cue.id;
+  const objects = await objectRepo().listByScene(scene.id);
+  const screens = await screenRepo().listByProject(scene.projectId);
+  const renderTree = renderer.buildTrees(objects, screens, scene.id);
   await eventBus.publish({ occurredAt: new Date(), eventType: 'CueTriggered' });
-  res.json({ cue, targetScene: scene });
-});
-
-router.post('/advance', async (req: Request, res: Response) => {
-  const projectId = state.projectId;
-  const current = state.activeCueId ? await cueRepo().findById(state.activeCueId) : null;
-  const cursor = current ? current.timelinePosition : -Infinity;
-  const db = await initializeDatabase('/tmp/stageflow-api.sqlite');
-  const next = await db.get<Record<string, unknown>>(`SELECT * FROM cues WHERE scene_id IN (SELECT id FROM scenes WHERE project_id = ?) AND timeline_position > ? ORDER BY timeline_position ASC LIMIT 1`, [projectId, cursor]);
-  if (!next) return res.status(204).send();
-  const cue = await cueRepo().findById(String(next.id));
-  if (!cue) return res.status(204).send();
-  const scene = await sceneRepo().findById(cue.sceneId);
-  if (!scene) return res.status(204).send();
-  state.activeCueId = cue.id;
-  res.json({ cue, targetScene: scene });
-});
-
-router.get('/status', async (_req: Request, res: Response) => {
-  res.json({
-    projectId: playback().projectId,
-    activeCueId: playback().activeCueId,
-    startedAt: playback().startedAt,
-    playing: Boolean(playback().startedAt),
-  });
+  res.json({ cue, targetScene: scene, renderTree });
 });
 
 export { router as PlaybackRouter };
