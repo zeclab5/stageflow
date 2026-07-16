@@ -36,17 +36,22 @@ AI 협업 플랫폼.
 ## Vercel 배포
 
 1. [Vercel Dashboard](https://vercel.com/new)에서 GitHub 저장소 `zeclab5/stageflow` Import
-2. Framework Preset: Other
-3. Build & Output Settings:
+2. Project Settings
+   - Root Directory: `.`
+   - Framework Preset: `Other`
    - Build Command: `npm run build`
-   - Output Directory: leave default
    - Install Command: `npm install`
-4. Environment Variables 등록:
+3. Environment Variables 등록:
    - `API_KEY`
    - `RESOLUME_HOST`
    - `RESOLUME_PORT`
-5. Deploy 클릭 -> 도메인 확인 -> Preview URL 확인
-6. Production 배포: main 브랜치 머지 또는 Redeploy
+4. Deploy 클릭 -> 도메인 확인 -> Preview URL 확인
+5. Production 배포: main 브랜치 머지 또는 Redeploy
+6. If Preview URL returns 302 or page looks empty: confirm `vercel.json` `routes` point to `apps/web/src/server.ts` and re-deploy
+
+로컬 실행:
+- API: `cd apps/api && PORT=3101 node dist/server.js`
+- Web: `cd apps/web && API_BASE=http://localhost:3101 PORT=3000 node dist/server.js`
 
 참고: [Vercel Project Settings](https://vercel.com/docs/projects/environment-variables) / [Node.js Runtime](https://vercel.com/docs/functions/runtimes/node-js)
 
