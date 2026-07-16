@@ -120,12 +120,14 @@ app.get('/scenes/:id', async (req, res) => {
       <h2>${scene.name}</h2>
       <p class="muted">Project ${scene.projectId} · Order ${scene.order}${scene.active ? ' · Active' : ''}</p>
       <div id="canvas" style="position:relative;width:100%;aspect-ratio:16/9;background:#0b1220;border-radius:12px;overflow:hidden;border:1px solid #1f2937;"></div>
-      <div style="margin-top:12px;display:flex;gap:8px;">
-        <button id="add-image" style="padding:8px 12px;">Add Image Asset</button>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <input id="asset-x" placeholder="x" style="width:70px" />
         <input id="asset-y" placeholder="y" style="width:70px" />
         <input id="asset-w" placeholder="w" style="width:70px" />
         <input id="asset-h" placeholder="h" style="width:70px" />
+        <button id="add-image" style="padding:8px 12px;">Add</button>
+        <button id="update-selected" style="padding:8px 12px;">Update Selected</button>
+        <button id="delete-selected" style="padding:8px 12px;">Delete Selected</button>
       </div>
       <h3 style="margin-top:12px;">Objects</h3>
       <div id="output-panel" style="margin-top:8px;">
@@ -144,6 +146,7 @@ app.get('/scenes/:id', async (req, res) => {
         const addOutputBtn = document.getElementById('add-output');
         const projectId = '${scene.projectId}';
         const sceneId = '${req.params.id}';
+        let selectedObjectId = null;
         const screenRes = await fetch('${API_BASE}/screens?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
         const screens = screenRes.ok ? await screenRes.json() : [];
         screenEl.innerHTML = screens.map((s: any) => '<option value="' + s.id + '">' + s.name + '</option>').join('');
@@ -152,6 +155,7 @@ app.get('/scenes/:id', async (req, res) => {
           const objects = await r.json();
           listEl.innerHTML = '';
           canvasEl.innerHTML = '';
+          selectedObjectId = null;
           for (const object of objects) {
             const assetRes = await fetch('${API_BASE}/assets/' + object.assetId + '?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
             const asset = assetRes.ok ? await assetRes.json() : {};
@@ -170,10 +174,26 @@ app.get('/scenes/:id', async (req, res) => {
             el.style.alignItems = 'center';
             el.style.justifyContent = 'center';
             el.style.fontSize = '12px';
+            el.style.cursor = 'pointer';
+            el.addEventListener('click', () => {
+              selectedObjectId = object.id;
+              document.getElementById('asset-x').value = object.x;
+              document.getElementById('asset-y').value = object.y;
+              document.getElementById('asset-w').value = object.width;
+              document.getElementById('asset-h').value = object.height;
+            });
             canvasEl.appendChild(el);
             const li = document.createElement('li');
             li.className = 'card';
             li.textContent = (asset.name || object.assetId) + ' (' + object.x + ',' + object.y + ') outputs:' + (object.outputs || []).join(',') || 'None';
+            li.style.cursor = 'pointer';
+            li.addEventListener('click', () => {
+              selectedObjectId = object.id;
+              document.getElementById('asset-x').value = object.x;
+              document.getElementById('asset-y').value = object.y;
+              document.getElementById('asset-w').value = object.width;
+              document.getElementById('asset-h').value = object.height;
+            });
             const assignBtn = document.createElement('button');
             assignBtn.textContent = 'Assign Output';
             assignBtn.style.marginLeft = '8px';
@@ -187,7 +207,15 @@ app.get('/scenes/:id', async (req, res) => {
               });
               loadObjects();
             });
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.style.marginLeft = '8px';
+            deleteBtn.addEventListener('click', async () => {
+              await fetch('${API_BASE}/scenes/objects/' + object.id, { method: 'DELETE', headers: { 'x-api-key': 'test-api-key' } });
+              loadObjects();
+            });
             li.appendChild(assignBtn);
+            li.appendChild(deleteBtn);
             listEl.appendChild(li);
           }
         }
@@ -203,6 +231,25 @@ app.get('/scenes/:id', async (req, res) => {
             headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
             body: JSON.stringify({ assetId: asset.id, x: document.getElementById('asset-x').value || 0, y: document.getElementById('asset-y').value || 0, width: document.getElementById('asset-w').value || 200, height: document.getElementById('asset-h').value || 200 })
           });
+          loadObjects();
+        });
+        document.getElementById('update-selected').addEventListener('click', async () => {
+          if (!selectedObjectId) return;
+          await fetch('${API_BASE}/scenes/objects/' + selectedObjectId, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
+            body: JSON.stringify({
+              x: Number(document.getElementById('asset-x').value || 0),
+              y: Number(document.getElementById('asset-y').value || 0),
+              width: Number(document.getElementById('asset-w').value || 200),
+              height: Number(document.getElementById('asset-h').value || 200),
+            })
+          });
+          loadObjects();
+        });
+        document.getElementById('delete-selected').addEventListener('click', async () => {
+          if (!selectedObjectId) return;
+          await fetch('${API_BASE}/scenes/objects/' + selectedObjectId, { method: 'DELETE', headers: { 'x-api-key': 'test-api-key' } });
           loadObjects();
         });
         addOutputBtn.addEventListener('click', () => {
