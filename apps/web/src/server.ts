@@ -645,7 +645,10 @@ app.get('/show-flow', async (_req, res) => {
           const r = await fetch('${API_BASE}/api/render/scene/' + encodeURIComponent(activeSceneId) + '?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
           const data = await r.json();
           previewEl.innerHTML = '';
-          if (!data?.trees?.length) return;
+          if (!data?.trees?.length) {
+            previewEl.innerHTML = '<div class="muted" style="padding:12px;">No render objects for this scene.</div>';
+            return;
+          }
           const compare = (a: any, b: any) => {
             if (sortMode === 'id') return a.id.localeCompare(b.id);
             if (sortMode === 'assetId') return a.assetId.localeCompare(b.assetId);

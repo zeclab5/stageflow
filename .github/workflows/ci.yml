@@ -20,6 +20,35 @@ jobs:
       - run: npm run build
       - run: npm run test
 
+  web-watchdog:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: lint-test
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - working-directory: apps/web
+        run: |
+          API_BASE=http://localhost:3101 node dist/server.js > server.log 2>&1 &
+          SERVER_PID=$!
+          for i in $(seq 1 30); do
+            if grep -q 'Web listening' server.log; then
+              break
+            fi
+            sleep 1
+          done
+          grep -q 'Web listening' server.log || (cat server.log && exit 1)
+          curl -f -s -o /dev/null -w "%{http_code}" http://localhost:3000/ | grep -q '^200$' || (cat server.log && exit 1)
+          curl -f -s -o /dev/null -w "%{http_code}" http://localhost:3000/show-flow | grep -q '^200$' || (cat server.log && exit 1)
+          kill $SERVER_PID || true
+          wait $SERVER_PID || true
+
   vercel-preview:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
