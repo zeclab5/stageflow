@@ -6,7 +6,8 @@ export { GenerationJob, JobId, JobStatus } from './domain/generation/GenerationJ
 export { IntegrationProfile, IntegrationId, ConnectionStatus } from './domain/integration/IntegrationProfile';
 export { Plugin } from './plugin/Plugin';
 export { PluginRegistry, PluginDescriptor, PluginManifest, PluginLoadError } from './plugin';
-export type { PluginConfig, PluginRegistryHooks } from './plugin';
+export type { PluginConfig, PluginRegistryHooks, PluginManifestSchema, PluginPackageJson } from './plugin';
+export { discoverPluginManifests, resolvePluginEntryPath, type ResolvedPluginManifest } from './plugin/PluginDiscovery';
 
 export { ProjectRepository, ProjectFilter } from './domain/project/ProjectRepository';
 export { SceneRepository, SceneId } from './domain/scene/SceneRepository';

@@ -4,6 +4,11 @@
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "stageflowPlugin": {
+    "entry": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "category": "integration"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "watch": "tsc -p tsconfig.json --watch"
