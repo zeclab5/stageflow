@@ -5,13 +5,13 @@ export interface ResolumePluginOptions {
   readonly port?: number;
   readonly baseUrl?: string;
   readonly name?: string;
-  readonly mode?: 'rest' | 'osc';
+  readonly mode?: 'rest' | 'osc' | 'websocket';
 }
 
 export class ResolumePlugin implements Plugin {
   readonly name: string;
   private readonly baseUrl: string;
-  private readonly mode: 'rest' | 'osc';
+  private readonly mode: 'rest' | 'osc' | 'websocket';
 
   constructor(options: ResolumePluginOptions = {}) {
     const host = options.host ?? '127.0.0.1';
@@ -22,7 +22,6 @@ export class ResolumePlugin implements Plugin {
   }
 
   async init(): Promise<void> {
-    if (this.mode !== 'rest') return;
     const status = await this.status();
     if (!status.startsWith('status=ok')) {
       throw new Error(`resolume not ready: ${status}`);
@@ -34,10 +33,13 @@ export class ResolumePlugin implements Plugin {
   }
 
   async status(): Promise<string> {
-    if (this.mode !== 'rest') return 'status=mode=osc';
+    if (this.mode !== 'rest') {
+      const transport = this.mode === 'websocket' ? 'websocket' : 'osc';
+      return `status=ok;mode=${transport};host=${this.baseUrl}`;
+    }
     try {
       const res = await fetch(`${this.baseUrl}/composition/list_composition`, { signal: AbortSignal.timeout(2000) });
-      return `status=${res.status}`;
+      return `status=ok;http=${res.status}`;
     } catch (err) {
       return `failed=${String(err).slice(0, 100)}`;
     }
@@ -71,6 +73,24 @@ export class ResolumePlugin implements Plugin {
     return await res.json();
   }
 
+  async onCueTriggered({ compositionId, clipId }: { compositionId: string; clipId?: string }) {
+    if (this.mode === 'websocket') {
+      return {
+        kind: 'websocket',
+        action: 'select',
+        address: `/composition/${compositionId}/select`
+      };
+    }
+    if (this.mode === 'osc') {
+      return {
+        kind: 'osc',
+        action: 'trigger',
+        address: `/composition/${compositionId}/select`
+      };
+    }
+    return await this.triggerClip(compositionId, clipId ?? compositionId);
+  }
+
   connect() {
     return this.baseUrl;
   }
@@ -80,7 +100,13 @@ export class ResolumePlugin implements Plugin {
       manifest: { name: this.name, version: '0.1.0', description: 'Resolume integration', category: 'integration' },
       create: async (config?: PluginConfig) => {
         const opts = (config as ResolumePluginOptions | undefined) ?? {};
-        return new ResolumePlugin({ ...opts, host: opts.host as string | undefined, port: opts.port as number | undefined, baseUrl: opts.baseUrl as string | undefined, name: opts.name as string | undefined, mode: opts.mode as 'rest' | 'osc' | undefined });
+        return new ResolumePlugin({
+          mode: opts.mode as 'rest' | 'websocket' | 'osc' | undefined,
+          host: opts.host as string | undefined,
+          port: opts.port as number | undefined,
+          baseUrl: opts.baseUrl as string | undefined,
+          name: opts.name as string | undefined
+        });
       }
     } satisfies PluginDescriptor as PluginDescriptor;
   }
