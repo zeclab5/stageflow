@@ -28,4 +28,10 @@ router.post('/:id/reorder', async (req, res) => {
   res.json(scene);
 });
 
+router.delete('/:id', async (req, res) => {
+  const service = container.resolve<SceneService>('SceneService');
+  await service.remove(req.params.id);
+  res.status(204).send();
+});
+
 export { router as SceneRouter };

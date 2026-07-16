@@ -30,6 +30,7 @@ const layout = (title: string, body: string) => `<!doctype html>
       <h1>StageFlow</h1>
       <nav>
         <a href="/">Home</a>
+        <a href="/scenes">Scenes</a>
         <a href="/works">Works</a>
         <a href="/blog">Blog</a>
         <a href="/plugins">Plugins</a>
@@ -45,6 +46,63 @@ app.get('/', (_req, res) => {
       <h2>Welcome</h2>
       <p class="muted">Plugin-first stage production platform.</p>
     </section>
+  `));
+});
+
+app.get('/scenes', async (_req, res) => {
+  const response = await fetch(`${API_BASE}/projects`);
+  const projects = await response.json();
+  res.send(layout('Scenes', `
+    <section class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h2>Scenes</h2>
+        <button id="new-scene" style="padding:8px 14px;">New Scene</button>
+      </div>
+      <ul id="scene-list" style="list-style:none;padding:0;margin-top:12px;"></ul>
+    </section>
+    <section class="card">
+      <h2>Scene Properties</h2>
+      <pre id="scene-detail" class="muted">Select a scene.</pre>
+    </section>
+    <script>
+      (async () => {
+        const listEl = document.getElementById('scene-list');
+        const detailEl = document.getElementById('scene-detail');
+        const projects = ${JSON.stringify(projects)};
+        const projectId = projects[0]?.id;
+        if (!projectId) {
+          detailEl.textContent = 'Create a project first.';
+          return;
+        }
+        document.getElementById('new-scene').addEventListener('click', async () => {
+          await fetch('${API_BASE}/scenes?projectId=' + encodeURIComponent(projectId), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
+            body: JSON.stringify({ name: 'Scene ' + (listEl.children.length + 1), order: listEl.children.length + 1 })
+          });
+          detailEl.textContent = '';
+          load();
+        });
+        async function load() {
+          const res = await fetch('${API_BASE}/scenes?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
+          const scenes = await res.json();
+          listEl.innerHTML = '';
+          for (const scene of scenes) {
+            const li = document.createElement('li');
+            li.className = 'card';
+            li.textContent = scene.name;
+            li.style.cursor = 'pointer';
+            li.addEventListener('click', async () => {
+              const r = await fetch('${API_BASE}/scenes/' + scene.id, { headers: { 'x-api-key': 'test-api-key' } });
+              const data = await r.json();
+              detailEl.textContent = JSON.stringify(data, null, 2);
+            });
+            listEl.appendChild(li);
+          }
+        }
+        await load();
+      })();
+    </script>
   `));
 });
 

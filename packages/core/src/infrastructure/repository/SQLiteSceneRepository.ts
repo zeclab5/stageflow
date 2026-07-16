@@ -20,4 +20,8 @@ export class SQLiteSceneRepository {
       [scene.id, scene.projectId, scene.name, scene.order]
     );
   }
+
+  async delete(id: SceneId): Promise<void> {
+    await this.db.run('DELETE FROM scenes WHERE id = ?', [id]);
+  }
 }

@@ -20,4 +20,10 @@ export interface SceneReorderedEvent {
   readonly occurredAt: Date;
 }
 
-export type SceneEvent = SceneCreatedEvent | SceneRenamedEvent | SceneReorderedEvent;
+export interface SceneDeletedEvent {
+  readonly eventType: 'SceneDeleted';
+  readonly sceneId: string;
+  readonly occurredAt: Date;
+}
+
+export type SceneEvent = SceneCreatedEvent | SceneRenamedEvent | SceneReorderedEvent | SceneDeletedEvent;

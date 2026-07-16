@@ -10,4 +10,8 @@ export class InMemorySceneRepository implements SceneRepository {
   async save(scene: Scene): Promise<void> {
     this.items.set(scene.id, scene);
   }
+
+  async delete(id: SceneId): Promise<void> {
+    this.items.delete(id);
+  }
 }

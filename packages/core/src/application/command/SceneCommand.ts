@@ -100,3 +100,14 @@ export class ReorderScene {
     return updated;
   }
 }
+
+export class DeleteScene {
+  constructor(
+    private readonly repo: SceneRepository,
+    private readonly eventBus?: EventBus
+  ) {}
+
+  async execute(id: SceneId): Promise<void> {
+    await this.repo.delete(id);
+  }
+}

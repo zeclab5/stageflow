@@ -1,6 +1,6 @@
 import { SceneRepository } from '../../domain/scene/SceneRepository';
-import { CreateScene, RenameScene, ReorderScene } from '../command/SceneCommand';
-import { ListScenes } from '../query/SceneQuery';
+import { CreateScene, RenameScene, ReorderScene, DeleteScene } from '../command/SceneCommand';
+import { GetScene, ListScenes } from '../query/SceneQuery';
 
 export class SceneService {
   constructor(private readonly repo: SceneRepository) {}
@@ -17,7 +17,15 @@ export class SceneService {
     return new ReorderScene(this.repo).execute(id, order);
   }
 
+  async remove(id: string) {
+    return new DeleteScene(this.repo).execute(id);
+  }
+
   async listByProject(projectId: string) {
     return new ListScenes(this.repo).execute(projectId);
+  }
+
+  async get(id: string) {
+    return new GetScene(this.repo).execute(id);
   }
 }
