@@ -227,7 +227,26 @@ app.get('/screens', async (_req, res) => {
     </section>
     <section class="card">
       <h2>Screen Properties</h2>
-      <pre id="screen-detail" class="muted">Select a screen.</pre>
+      <div id="screen-form" style="display:flex;flex-direction:column;gap:8px;max-width:420px;">
+        <input id="screen-name" placeholder="name" style="padding:8px 12px;" />
+        <select id="screen-type" style="padding:8px 12px;">
+          <option value="Projection">Projection</option>
+          <option value="Monitor">Monitor</option>
+          <option value="LED">LED</option>
+          <option value="Preview">Preview</option>
+        </select>
+        <input id="screen-w" placeholder="width" style="padding:8px 12px;" />
+        <input id="screen-h" placeholder="height" style="padding:8px 12px;" />
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input id="screen-enabled" type="checkbox" checked />
+          <span>Enabled</span>
+        </label>
+        <div style="display:flex;gap:8px;">
+          <button id="save-screen" style="padding:8px 14px;">Save</button>
+          <button id="delete-screen" style="padding:8px 14px;">Delete</button>
+        </div>
+        <pre id="screen-detail" class="muted" style="margin-top:12px;">Select a screen.</pre>
+      </div>
     </section>
     <script>
       (async () => {
@@ -239,14 +258,14 @@ app.get('/screens', async (_req, res) => {
           detailEl.textContent = 'Create a project first.';
           return;
         }
+        let selectedId = null;
         document.getElementById('new-screen').addEventListener('click', async () => {
           await fetch('${API_BASE}/screens?projectId=' + encodeURIComponent(projectId), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
             body: JSON.stringify({ name: 'Screen ' + (listEl.children.length + 1), type: 'Projection', resolution: { width: 1920, height: 1080 }, order: listEl.children.length + 1 })
           });
-          detailEl.textContent = '';
-          load();
+          await load();
         });
         async function load() {
           const res = await fetch('${API_BASE}/screens?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
@@ -255,16 +274,42 @@ app.get('/screens', async (_req, res) => {
           for (const screen of screens) {
             const li = document.createElement('li');
             li.className = 'card';
-            li.textContent = screen.name;
+            li.textContent = screen.name + ' (' + screen.type + ' ' + (screen.resolution?.width || 0) + 'x' + (screen.resolution?.height || 0) + ')';
             li.style.cursor = 'pointer';
             li.addEventListener('click', async () => {
-              const r = await fetch('${API_BASE}/screens/' + screen.id, { headers: { 'x-api-key': 'test-api-key' } });
-              const data = await r.json();
-              detailEl.textContent = JSON.stringify(data, null, 2);
+              selectedId = screen.id;
+              document.getElementById('screen-name').value = screen.name || '';
+              document.getElementById('screen-type').value = screen.type || 'Projection';
+              document.getElementById('screen-w').value = screen.resolution?.width || '';
+              document.getElementById('screen-h').value = screen.resolution?.height || '';
+              document.getElementById('screen-enabled').checked = Boolean(screen.enabled);
+              detailEl.textContent = JSON.stringify(screen, null, 2);
             });
             listEl.appendChild(li);
           }
         }
+        document.getElementById('save-screen').addEventListener('click', async () => {
+          if (!selectedId) return;
+          const name = document.getElementById('screen-name').value || 'Untitled';
+          const type = document.getElementById('screen-type').value;
+          const width = Number(document.getElementById('screen-w').value || 0);
+          const height = Number(document.getElementById('screen-h').value || 0);
+          const enabled = document.getElementById('screen-enabled').checked;
+          await fetch('${API_BASE}/screens/' + selectedId, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
+            body: JSON.stringify({ name, type, resolution: { width, height }, enabled, order: 0 })
+          });
+          detailEl.textContent = 'Saved';
+          await load();
+        });
+        document.getElementById('delete-screen').addEventListener('click', async () => {
+          if (!selectedId) return;
+          await fetch('${API_BASE}/screens/' + selectedId, { method: 'DELETE', headers: { 'x-api-key': 'test-api-key' } });
+          selectedId = null;
+          detailEl.textContent = 'Select a screen.';
+          await load();
+        });
         await load();
       })();
     </script>
