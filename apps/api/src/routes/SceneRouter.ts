@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import type { SceneService } from 'stageflow-core';
+import { SQLiteSceneObjectRepository, SceneService } from 'stageflow-core';
 import { container } from '../container';
 
 const router = Router();
@@ -28,6 +28,32 @@ router.post('/:id/reorder', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   await service().remove(req.params.id);
+  res.status(204).send();
+});
+
+router.get('/:id/objects', async (req, res) => {
+  const repo = container.resolve<SQLiteSceneObjectRepository>('SQLiteSceneObjectRepository');
+  const objects = await repo.listByScene(req.params.id);
+  res.json(objects);
+});
+
+router.post('/:id/objects', async (req, res) => {
+  const repo = container.resolve<SQLiteSceneObjectRepository>('SQLiteSceneObjectRepository');
+  const object = await repo.save(req.body);
+  res.status(201).json(object);
+});
+
+router.patch('/objects/:objectId', async (req, res) => {
+  const repo = container.resolve<SQLiteSceneObjectRepository>('SQLiteSceneObjectRepository');
+  const object = await repo.findById(req.params.objectId);
+  if (!object) return res.status(404).json({ error: 'not found' });
+  await repo.save({ ...object, ...req.body });
+  res.json(await repo.findById(req.params.objectId));
+});
+
+router.delete('/objects/:objectId', async (req, res) => {
+  const repo = container.resolve<SQLiteSceneObjectRepository>('SQLiteSceneObjectRepository');
+  await repo.delete(req.params.objectId);
   res.status(204).send();
 });
 

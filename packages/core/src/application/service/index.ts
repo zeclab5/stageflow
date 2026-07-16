@@ -6,3 +6,4 @@ export { GenerationService } from './GenerationService';
 export { IntegrationService } from './IntegrationService';
 export { CueService } from './CueService';
 export { ScreenService } from './ScreenService';
+export { SceneObjectService } from './SceneObjectService';

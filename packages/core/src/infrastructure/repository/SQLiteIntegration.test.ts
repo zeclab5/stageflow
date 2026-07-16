@@ -58,7 +58,7 @@ describe('SQLite integration', () => {
   it('saves and loads assets', async () => {
     const repo = new SQLiteAssetRepository(db);
     const asset = { id: 'a1', projectId: 'p1', name: 'a1', type: 'image' as const, uri: 's3://a.jpg' };
-    await repo.save(asset);
+    await repo.save(asset as unknown as import('../../domain/asset/Asset').Asset);
     const loaded = await repo.findById('a1');
     expect(loaded).not.toBeNull();
     if (!loaded) { return; }

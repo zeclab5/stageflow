@@ -10,6 +10,8 @@ export type { PluginConfig, PluginRegistryHooks } from './plugin';
 
 export { ProjectRepository, ProjectFilter } from './domain/project/ProjectRepository';
 export { SceneRepository, SceneId } from './domain/scene/SceneRepository';
+export { SceneObjectRepository } from './domain/scene/SceneObjectRepository';
+export { ScreenRepository } from './domain/screen/ScreenRepository';
 export { PromptRepository, PromptVariables } from './domain/prompt/PromptRepository';
 
 export { CreateProject } from './application/command/CreateProject';
@@ -39,6 +41,7 @@ export { SQLiteGenerationJobRepository } from './infrastructure/repository/SQLit
 export { SQLiteIntegrationRepository } from './infrastructure/repository/SQLiteIntegrationRepository';
 export { SQLiteCueRepository } from './infrastructure/repository/SQLiteCueRepository';
 export { SQLiteScreenRepository } from './infrastructure/repository/SQLiteScreenRepository';
+export { SQLiteSceneObjectRepository } from './infrastructure/repository/SQLiteSceneObjectRepository';
 
 export { SQLiteConnection } from './infrastructure/persistence/sqlite/SQLiteConnection';
 export { initializeDatabase } from './infrastructure/persistence/sqlite/SQLiteProvider';
@@ -52,5 +55,6 @@ export {
   GenerationService,
   IntegrationService,
   CueService,
-  ScreenService
+  ScreenService,
+  SceneObjectService
 } from './application/service';
