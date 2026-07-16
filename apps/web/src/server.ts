@@ -32,6 +32,7 @@ const layout = (title: string, body: string) => `<!doctype html>
         <a href="/">Home</a>
         <a href="/scenes">Scenes</a>
         <a href="/screens">Screens</a>
+        <a href="/show-flow">Show Flow</a>
         <a href="/library">Library</a>
         <a href="/works">Works</a>
         <a href="/blog">Blog</a>
@@ -218,6 +219,85 @@ app.get('/library', async (_req, res) => {
             listEl.appendChild(li);
           }
         }
+        await load();
+      })();
+    </script>
+  `));
+});
+
+app.get('/show-flow', async (_req, res) => {
+  const response = await fetch(`${API_BASE}/projects`);
+  const projects = await response.json();
+  res.send(layout('Show Flow', `
+    <section class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h2>Show Flow</h2>
+        <span id="current-status" class="muted">Ready</span>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button id="prev-scene" style="padding:8px 12px;">Previous</button>
+        <button id="activate-scene" style="padding:8px 12px;">Activate</button>
+        <button id="next-scene" style="padding:8px 12px;">Next</button>
+      </div>
+      <pre id="current-scene" class="muted" style="margin-top:12px;">No active scene.</pre>
+      <ul id="scene-list" style="list-style:none;padding:0;margin-top:12px;"></ul>
+    </section>
+    <script>
+      (async () => {
+        const listEl = document.getElementById('scene-list');
+        const statusEl = document.getElementById('current-status');
+        const currentEl = document.getElementById('current-scene');
+        const projects = ${JSON.stringify(projects)};
+        const projectId = projects[0]?.id;
+        if (!projectId) {
+          currentEl.textContent = 'Create a project first.';
+          return;
+        }
+        let scenes = [];
+        let activeSceneId = null;
+        async function load() {
+          const res = await fetch('${API_BASE}/scenes?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
+          scenes = await res.json();
+          listEl.innerHTML = '';
+          for (const scene of scenes) {
+            const li = document.createElement('li');
+            li.className = 'card';
+            li.textContent = (activeSceneId === scene.id ? '▶ ' : '') + scene.name;
+            li.style.cursor = 'pointer';
+            li.addEventListener('click', () => {
+              activeSceneId = scene.id;
+              statusEl.textContent = 'Active: ' + scene.name;
+              render();
+            });
+            listEl.appendChild(li);
+          }
+          currentEl.textContent = activeSceneId ? ('Active: ' + (scenes.find((s) => s.id === activeSceneId)?.name ?? activeSceneId)) : 'No active scene.';
+        }
+        function render() { load(); }
+        document.getElementById('activate-scene').addEventListener('click', async () => {
+          if (!activeSceneId) {
+            statusEl.textContent = 'Select a scene first.';
+            return;
+          }
+          statusEl.textContent = 'Active: ' + (scenes.find((s) => s.id === activeSceneId)?.name ?? activeSceneId);
+          render();
+        });
+        document.getElementById('next-scene').addEventListener('click', async () => {
+          if (!scenes.length) return;
+          const idx = scenes.findIndex((s) => s.id === activeSceneId);
+          const next = scenes[(idx + 1) % scenes.length];
+          activeSceneId = next.id;
+          statusEl.textContent = 'Active: ' + next.name;
+          render();
+        });
+        document.getElementById('prev-scene').addEventListener('click', async () => {
+          if (!scenes.length) return;
+          const idx = scenes.findIndex((s) => s.id === activeSceneId);
+          const prev = scenes[(idx - 1 + scenes.length) % scenes.length];
+          activeSceneId = prev.id;
+          statusEl.textContent = 'Active: ' + prev.name;
+          render();
+        });
         await load();
       })();
     </script>

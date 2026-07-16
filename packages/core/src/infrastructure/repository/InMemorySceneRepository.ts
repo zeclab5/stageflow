@@ -14,4 +14,10 @@ export class InMemorySceneRepository implements SceneRepository {
   async delete(id: SceneId): Promise<void> {
     this.items.delete(id);
   }
+
+  async listByProject(projectId: string): Promise<Scene[]> {
+    return Array.from(this.items.values())
+      .filter((scene) => scene.projectId === projectId)
+      .sort((a, b) => a.order - b.order);
+  }
 }

@@ -7,4 +7,5 @@ export interface SceneRepository {
   findById(id: SceneId): Promise<Scene | null>;
   save(scene: Scene): Promise<void>;
   delete(id: SceneId): Promise<void>;
+  listByProject(projectId: ProjectId): Promise<Scene[]>;
 }

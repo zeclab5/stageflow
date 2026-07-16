@@ -13,8 +13,7 @@ export class GetScene {
 export class ListScenes {
   constructor(private readonly repo: SceneRepository) {}
 
-  async execute(_projectId: string): Promise<Scene[]> {
-    void _projectId;
-    return [];
+  async execute(projectId: string): Promise<Scene[]> {
+    return this.repo.listByProject(projectId);
   }
 }

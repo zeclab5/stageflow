@@ -24,4 +24,12 @@ export class SQLiteSceneRepository {
   async delete(id: SceneId): Promise<void> {
     await this.db.run('DELETE FROM scenes WHERE id = ?', [id]);
   }
+
+  async listByProject(projectId: string): Promise<Scene[]> {
+    const rows = await this.db.all<{ id: string; projectId: string; name: string; sceneOrder: number }>(
+      'SELECT id, project_id as projectId, name, "order" as sceneOrder FROM scenes WHERE project_id = ? ORDER BY "order" ASC',
+      [projectId]
+    );
+    return rows.map((row) => new Scene({ id: row.id, projectId: row.projectId, name: row.name, order: row.sceneOrder }));
+  }
 }
