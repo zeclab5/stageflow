@@ -1,12 +1,14 @@
 import { Router } from 'express';
 import { pluginRegistry } from '../container';
+import { discoverPluginManifests } from 'stageflow-core';
 
 const router = Router();
 
 router.get('/', (_req, res) => {
   const loaded = pluginRegistry.all().map(plugin => ({ name: plugin.name }));
   const manifests = pluginRegistry.listManifests().map(manifest => ({ name: manifest.name, version: manifest.version, category: manifest.category }));
-  res.json({ loaded, manifests });
+  const discovered = discoverPluginManifests().map(manifest => ({ name: manifest.name, version: manifest.version, description: manifest.description, category: manifest.category, entry: manifest.entry }));
+  res.json({ loaded, manifests, discovered });
 });
 
 router.post('/:name/activate', async (req, res) => {

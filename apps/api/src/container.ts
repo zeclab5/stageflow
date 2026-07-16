@@ -1,5 +1,5 @@
 import { existsSync, unlinkSync } from 'fs';
-import { DIContainer, PluginRegistry, initializeDatabase } from 'stageflow-core';
+import { DIContainer, PluginRegistry, initializeDatabase, discoverPluginManifests, resolvePluginEntryPath } from 'stageflow-core';
 import { SQLiteProjectRepository, SQLiteSceneRepository, SQLitePromptRepository, SQLiteAssetRepository, SQLiteGenerationJobRepository, SQLiteIntegrationRepository, SQLiteCueRepository, SQLiteScreenRepository, SQLiteSceneObjectRepository } from 'stageflow-core';
 import { ProjectService, SceneService, PromptService, AssetService, GenerationService, IntegrationService, CueService, ScreenService, SceneObjectService } from 'stageflow-core';
 import { healthPluginDescriptor } from './plugins/HealthPlugin';
@@ -56,5 +56,28 @@ export async function bootstrapContainer() {
   container.register('SQLiteSceneObjectRepository', () => objectRepo);
 
   pluginRegistry.registerDescriptor(healthPluginDescriptor);
+
+  for (const manifest of discoverPluginManifests()) {
+    if (pluginRegistry.getManifest(manifest.name)) continue;
+    const entry = resolvePluginEntryPath(manifest);
+    try {
+      const mod = await import(entry);
+      const create = mod.default?.create ?? mod.create;
+      if (typeof create === 'function') {
+        pluginRegistry.registerDescriptor({
+          manifest: {
+            name: manifest.name,
+            version: manifest.version ?? '0.0.0',
+            description: manifest.description,
+            category: manifest.category ?? 'integration',
+          },
+          create: async (config) => create(config),
+        });
+      }
+    } catch {
+      // leave discovery to manual activation
+    }
+  }
+
   await pluginRegistry.load('health');
 }
