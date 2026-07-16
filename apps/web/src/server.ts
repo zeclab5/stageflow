@@ -552,25 +552,42 @@ app.get('/inspector', async (_req, res) => {
   `));
 });
 
+app.get('/library', async (_req, res) => {
+  try {
+    const response = await fetch(`${API_BASE}/api/pipeline/runs?projectId=p1`, { headers: { 'x-api-key': 'test-api-key' } });
+    const data = await response.json();
+    res.send(layout('Library', `
+      <section class="card">
+        <h2>Asset Pipeline</h2>
+        <pre>${JSON.stringify(data, null, 2)}</pre>
+      </section>
+    `));
+  } catch (e) {
+    res.send(layout('Library', `<section class="card"><h2>Library</h2><p class="muted">${String(e)}</p></section>`));
+  }
+});
+
 app.get('/works', async (_req, res) => {
   const response = await fetch(`${API_BASE}/api/works`);
   const data = await response.json();
-  const body = data.map((item: { slug: string; title?: string; description?: string }) => `
-    <article class="card">
-      <h2><a href="/works/${item.slug}">${item.title ?? item.slug}</a></h2>
-      <p class="muted">${item.description ?? ''}</p>
-    </article>
-  `).join('');
-  res.send(layout('Works', `<section>${body || '<p class="muted">No works yet.</p>'}</section>`));
+  res.send(layout('Works', `
+    <section class="card">
+      <h2>Works</h2>
+      <ul style="list-style:none;padding:0;">
+        ${data.map((item: any) => `<li><a href="/works/${item.slug}">${item.title || item.slug}</a></li>`).join('')}
+      </ul>
+      <p class="muted">${data.length ? data.length + ' items' : 'No works yet.'}</p>
+    </section>
+  `));
 });
 
 app.get('/works/:slug', async (req, res) => {
   const response = await fetch(`${API_BASE}/api/works/${req.params.slug}`);
   if (!response.ok) return res.status(404).send(layout('Not found', '<p>Not found</p>'));
   const data = await response.json();
-  res.send(layout(data.title ?? `Work ${data.slug}`, `
+  res.send(layout(data.title ?? `Work ${req.params.slug}`, `
     <article class="card">
-      <h2>${data.title ?? data.slug}</h2>
+      <h2>${data.title ?? req.params.slug}</h2>
       <p class="muted">${data.date ? data.date + ' · ' : ''}${[data.client, data.description].filter(Boolean).join(' | ')}</p>
       ${data.thumbnail ? `<div style="margin-top:12px"><img src="${data.thumbnail}" alt="${data.title ?? ''}" style="max-width:100%;border-radius:12px;border:1px solid #e5e7eb;" /></div>` : ''}
       ${data.description ? `<p style="margin-top:12px">${data.description}</p>` : ''}

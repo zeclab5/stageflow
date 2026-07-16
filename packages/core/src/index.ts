@@ -42,6 +42,7 @@ export { SQLiteIntegrationRepository } from './infrastructure/repository/SQLiteI
 export { SQLiteCueRepository } from './infrastructure/repository/SQLiteCueRepository';
 export { SQLiteScreenRepository } from './infrastructure/repository/SQLiteScreenRepository';
 export { SQLiteSceneObjectRepository } from './infrastructure/repository/SQLiteSceneObjectRepository';
+export { SQLiteAssetPipelineRunRepository } from './infrastructure/repository/SQLiteAssetPipelineRunRepository';
 
 export { SQLiteConnection } from './infrastructure/persistence/sqlite/SQLiteConnection';
 export { initializeDatabase } from './infrastructure/persistence/sqlite/SQLiteProvider';
