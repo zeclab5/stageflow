@@ -8,7 +8,7 @@ export class CreateScene {
     private readonly eventBus?: EventBus
   ) {}
 
-  async execute(projectId: string, name: string, order: number): Promise<Scene> {
+  async execute(projectId: string, name: string, order: number, active: boolean = false): Promise<Scene> {
     if (!name || !name.trim()) throw new Error('scene name is required');
     if (!Number.isInteger(order) || order < 1) throw new Error('scene order must be >= 1');
 
@@ -16,7 +16,8 @@ export class CreateScene {
       id: crypto.randomUUID(),
       projectId,
       name: name.trim(),
-      order
+      order,
+      active
     });
 
     await this.repo.save(scene);
@@ -50,7 +51,8 @@ export class RenameScene {
       id: scene.id,
       projectId: scene.projectId,
       name: name.trim(),
-      order: scene.order
+      order: scene.order,
+      active: scene.active
     });
 
     await this.repo.save(updated);
@@ -65,6 +67,20 @@ export class RenameScene {
     }
 
     return updated;
+  }
+}
+
+export class ActivateScene {
+  constructor(
+    private readonly repo: SceneRepository,
+    private readonly projectId: string
+  ) {}
+
+  async execute(id: SceneId): Promise<void> {
+    const scenes = await this.repo.listByProject(this.projectId);
+    for (const scene of scenes) {
+      await this.repo.save(new Scene({ ...scene, active: scene.id === id }));
+    }
   }
 }
 
@@ -83,7 +99,8 @@ export class ReorderScene {
       id: scene.id,
       projectId: scene.projectId,
       name: scene.name,
-      order
+      order,
+      active: scene.active
     });
 
     await this.repo.save(updated);

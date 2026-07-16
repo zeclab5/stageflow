@@ -33,7 +33,7 @@ describe('SQLite integration', () => {
 
   it('saves and loads scenes', async () => {
     const repo = new SQLiteSceneRepository(db);
-    const scene = { id: 's1', projectId: 'p1', name: 'opening', order: 1 };
+    const scene = { id: 's1', projectId: 'p1', name: 'opening', order: 1, active: false };
     await repo.save(scene);
     const loaded = await repo.findById('s1');
     expect(loaded).not.toBeNull();

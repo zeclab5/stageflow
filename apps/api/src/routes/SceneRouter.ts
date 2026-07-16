@@ -38,8 +38,7 @@ router.get('/:id/objects', async (req, res) => {
 });
 
 router.post('/:id/objects', async (req, res) => {
-  const repo = container.resolve<SQLiteSceneObjectRepository>('SQLiteSceneObjectRepository');
-  const object = await repo.save(req.body);
+  const object = await service().placeObject(req.params.id, req.body);
   res.status(201).json(object);
 });
 
