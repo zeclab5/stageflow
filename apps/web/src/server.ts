@@ -314,6 +314,7 @@ app.get('/show-flow', async (_req, res) => {
         <button id="next-scene" style="padding:8px 12px;">Next</button>
       </div>
       <pre id="current-scene" class="muted" style="margin-top:12px;">No active scene.</pre>
+      <div id="preview" style="position:relative;width:100%;aspect-ratio:16/9;background:#0b1220;border-radius:12px;overflow:hidden;border:1px solid #1f2937;margin-top:12px;"></div>
       <ul id="scene-list" style="list-style:none;padding:0;margin-top:12px;"></ul>
     </section>
     <script>
@@ -329,6 +330,36 @@ app.get('/show-flow', async (_req, res) => {
         }
         let scenes = [];
         let activeSceneId = null;
+        const previewEl = document.getElementById('preview');
+        async function loadObjects() {
+          if (!activeSceneId) {
+            previewEl.innerHTML = '';
+            return;
+          }
+          const r = await fetch('${API_BASE}/scenes/' + encodeURIComponent(activeSceneId) + '/objects', { headers: { 'x-api-key': 'test-api-key' } });
+          const objects = await r.json();
+          previewEl.innerHTML = '';
+          for (const object of objects) {
+            const assetRes = await fetch('${API_BASE}/assets/' + object.assetId + '?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
+            const asset = assetRes.ok ? await assetRes.json() : {};
+            const el = document.createElement('div');
+            el.textContent = asset.name || object.assetId;
+            el.style.position = 'absolute';
+            el.style.left = object.x + 'px';
+            el.style.top = object.y + 'px';
+            el.style.width = object.width + 'px';
+            el.style.height = object.height + 'px';
+            el.style.background = asset.type === 'image' ? '#334155' : '#2563eb';
+            el.style.borderRadius = '12px';
+            el.style.border = '1px solid #e5e7eb';
+            el.style.color = '#fff';
+            el.style.display = 'flex';
+            el.style.alignItems = 'center';
+            el.style.justifyContent = 'center';
+            el.style.fontSize = '12px';
+            previewEl.appendChild(el);
+          }
+        }
         async function load() {
           const res = await fetch('${API_BASE}/scenes?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
           scenes = await res.json();
@@ -345,6 +376,7 @@ app.get('/show-flow', async (_req, res) => {
             listEl.appendChild(li);
           }
           currentEl.textContent = activeSceneId ? ('Active: ' + (scenes.find((s) => s.id === activeSceneId)?.name ?? activeSceneId)) : 'No active scene.';
+          await loadObjects();
         }
         async function activate(id) {
           await fetch('${API_BASE}/scenes/' + encodeURIComponent(id) + '/activate?projectId=' + encodeURIComponent(projectId), {
