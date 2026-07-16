@@ -1,3 +1,15 @@
+---
+Title: ENTITY_DESIGN
+Version: 1.0
+Status: Review
+Author: Hermes
+Reviewer: ChatGPT (CTO)
+Created: 2026-07-16
+Updated: 2026-07-16
+Category: domain
+Tags: [entity, domain]
+---
+
 # ENTITY_DESIGN
 
 > Entity는 식별성(ID)을 가지며, 상태가 변경되어도 동일한 Entity로 간주된다.
