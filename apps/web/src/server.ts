@@ -506,6 +506,8 @@ app.get('/show-flow', async (_req, res) => {
         let cues = [];
         const previewEl = document.getElementById('preview-grid');
         const storageKey = 'showflow-active-' + projectId;
+        const sortKey = 'showflow-sort-' + projectId;
+        let sortMode = localStorage.getItem(sortKey) || 'layer';
         async function loadRender() {
           if (!activeSceneId) {
             previewEl.innerHTML = '';
@@ -516,7 +518,13 @@ app.get('/show-flow', async (_req, res) => {
           const data = await r.json();
           previewEl.innerHTML = '';
           if (!data?.trees?.length) return;
+          const compare = (a: any, b: any) => {
+            if (sortMode === 'id') return a.id.localeCompare(b.id);
+            if (sortMode === 'assetId') return a.assetId.localeCompare(b.assetId);
+            return (a.layerIndex ?? 0) - (b.layerIndex ?? 0) || a.id.localeCompare(b.id);
+          };
           for (const tree of data.trees) {
+            const objects = [...tree.objects].sort(compare);
             const wrapper = document.createElement('div');
             wrapper.style.position = 'relative';
             wrapper.style.aspectRatio = '16/9';
@@ -535,7 +543,7 @@ app.get('/show-flow', async (_req, res) => {
             label.style.borderRadius = '8px';
             label.style.fontSize = '12px';
             wrapper.appendChild(label);
-            for (const object of tree.objects) {
+            for (const object of objects) {
               const el = document.createElement('div');
               el.textContent = object.assetId;
               el.style.position = 'absolute';
@@ -641,6 +649,20 @@ app.get('/show-flow', async (_req, res) => {
         stopAdvanceBtn.textContent = 'Stop Auto';
         stopAdvanceBtn.style.padding = '8px 12px';
         const controlsEl = document.getElementById('reload').parentElement;
+        const sortLabel = document.createElement('label');
+        sortLabel.className = 'muted';
+        sortLabel.style.marginRight = '8px';
+        const sortSelect = document.createElement('select');
+        ['layer', 'id', 'assetId'].forEach((mode) => {
+          const option = document.createElement('option');
+          option.value = mode;
+          option.textContent = 'Sort: ' + mode;
+          if (mode === sortMode) option.selected = true;
+          sortSelect.appendChild(option);
+        });
+        sortSelect.addEventListener('change', () => { sortMode = sortSelect.value; localStorage.setItem(sortKey, sortMode); loadRender(); });
+        sortLabel.appendChild(sortSelect);
+        controlsEl.insertBefore(sortLabel, document.getElementById('reload').nextSibling);
         controlsEl.insertBefore(advanceMsInput, document.getElementById('reload').nextSibling);
         controlsEl.insertBefore(advanceBtn, document.getElementById('reload').nextSibling);
         controlsEl.insertBefore(stopAdvanceBtn, document.getElementById('reload').nextSibling);
