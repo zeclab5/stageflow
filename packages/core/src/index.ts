@@ -43,6 +43,7 @@ export { SQLiteCueRepository } from './infrastructure/repository/SQLiteCueReposi
 export { SQLiteScreenRepository } from './infrastructure/repository/SQLiteScreenRepository';
 export { SQLiteSceneObjectRepository } from './infrastructure/repository/SQLiteSceneObjectRepository';
 export { SQLiteAssetPipelineRunRepository } from './infrastructure/repository/SQLiteAssetPipelineRunRepository';
+export { AssetPipelineRunner } from './infrastructure/pipeline/AssetPipelineRunner';
 export { MultiScreenRenderer } from './infrastructure/render/MultiScreenRenderer';
 
 export { SQLiteConnection } from './infrastructure/persistence/sqlite/SQLiteConnection';

@@ -136,4 +136,21 @@ CREATE TABLE IF NOT EXISTS scene_objects (
   layer_index INTEGER NOT NULL DEFAULT 0,
   outputs TEXT NOT NULL DEFAULT '[]'
 );
+
+CREATE TABLE IF NOT EXISTS asset_pipeline_runs (
+  id TEXT PRIMARY KEY,
+  asset_id TEXT NOT NULL,
+  project_id TEXT NOT NULL,
+  source_uri TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'queued',
+  current_stage TEXT NOT NULL DEFAULT 'detect',
+  attempts INTEGER NOT NULL DEFAULT 0,
+  metadata TEXT NOT NULL DEFAULT '{}',
+  thumbnail_uri TEXT NOT NULL DEFAULT '',
+  cache_uri TEXT NOT NULL DEFAULT '',
+  indexed INTEGER NOT NULL DEFAULT 0,
+  error TEXT NOT NULL DEFAULT '',
+  occurred_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 `;

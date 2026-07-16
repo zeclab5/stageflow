@@ -649,9 +649,32 @@ app.get('/library', async (_req, res) => {
     const data = await response.json();
     res.send(layout('Library', `
       <section class="card">
-        <h2>Asset Pipeline</h2>
-        <pre>${JSON.stringify(data, null, 2)}</pre>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <h2>Asset Pipeline</h2>
+          <button id="run-pipeline" style="padding:8px 14px;">Run Pipeline</button>
+        </div>
+        <pre id="pipeline-status" class="muted" style="margin-top:12px;">Idle</pre>
+        <pre id="pipeline-output" style="margin-top:12px;">${JSON.stringify(data, null, 2)}</pre>
       </section>
+      <script>
+        document.getElementById('run-pipeline').addEventListener('click', async () => {
+          const statusEl = document.getElementById('pipeline-status');
+          const outputEl = document.getElementById('pipeline-output');
+          statusEl.textContent = 'Running...';
+          try {
+            const r = await fetch('${API_BASE}/api/pipeline/run', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
+              body: JSON.stringify({ projectId: 'p1', root: '${process.cwd()}/public/content' })
+            });
+            const json = await r.json();
+            outputEl.textContent = JSON.stringify(json, null, 2);
+            statusEl.textContent = 'Completed ' + new Date().toLocaleTimeString();
+          } catch (e) {
+            statusEl.textContent = 'Error: ' + e.message;
+          }
+        });
+      </script>
     `));
   } catch (e) {
     res.send(layout('Library', `<section class="card"><h2>Library</h2><p class="muted">${String(e)}</p></section>`));

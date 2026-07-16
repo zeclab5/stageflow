@@ -1,7 +1,7 @@
 import { readdirSync, statSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileFingerprint, extToKind, MetadataExtractionStep, ThumbnailGeneratorStep, CacheCreationStep, SearchIndexStep } from './pipelineSteps';
-import type { AssetPipelineRun, AssetPipelineRunRepository, AssetPipelineRunId, AssetPipelineProjectId, AssetPipelineStage, AssetPipelineStatus, AssetKind } from '../../domain/asset/AssetPipeline';
+import type { AssetPipelineRun, AssetPipelineRunRepository, AssetPipelineRunId, AssetPipelineProjectId, AssetPipelineStage, AssetKind } from '../../domain/asset/AssetPipeline';
 import { eventBus } from '../../infrastructure/event/EventBus';
 
 function stableRunId(path: string): AssetPipelineRunId {
@@ -29,13 +29,10 @@ export class AssetPipelineRunner {
     for (const entry of entries) {
       const path = join(entry.parentPath, entry.name);
       const kind = extToKind(path);
-      const detectStage: AssetPipelineStage = 'detect';
-      const runningStatus: AssetPipelineStatus = 'running';
-      const succeededStatus: AssetPipelineStatus = 'succeeded';
       const base = this.baseRun(path, projectId, kind, now);
       let run: AssetPipelineRun = {
         ...base,
-        currentStage: detectStage,
+        currentStage: 'detect',
         status: 'queued',
         attempts: 0,
         metadata: {},
@@ -55,7 +52,7 @@ export class AssetPipelineRunner {
       run = await this.indexStage(run, kind);
       await repository.save(run);
 
-      const completed: AssetPipelineRun = { ...run, currentStage: 'completed', status: succeededStatus };
+      const completed: AssetPipelineRun = { ...run, currentStage: 'completed', status: 'succeeded' };
       await repository.save(completed);
       await eventBus.publish({ occurredAt: now, eventType: 'AssetPipelineRunCompleted' });
       runs.push(completed);
