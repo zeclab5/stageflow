@@ -1,4 +1,36 @@
 import { SQLiteConnection } from './SQLiteConnection';
+import { readdirSync, existsSync } from 'fs';
+import { join } from 'path';
+
+const MIGRATIONS_DIR = join(__dirname, '..', '..', '..', 'sqlite', 'migrations');
+
+async function ensureMigrationsTable(conn: SQLiteConnection): Promise<void> {
+  await conn.run(`CREATE TABLE IF NOT EXISTS schema_migrations (version TEXT PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`);
+}
+
+async function getAppliedVersions(conn: SQLiteConnection): Promise<Set<string>> {
+  const rows = await conn.all<{ version: string }>('SELECT version FROM schema_migrations');
+  return new Set(rows.map(r => r.version));
+}
+
+async function applyMigrations(db: SQLiteConnection): Promise<void> {
+  if (!existsSync(MIGRATIONS_DIR)) return;
+  const dir = readdirSync(MIGRATIONS_DIR)
+    .filter(name => name.endsWith('.sql') && /^V\d+__.+\.sql$/.test(name))
+    .sort();
+  await ensureMigrationsTable(db);
+  const applied = await getAppliedVersions(db);
+  for (const file of dir) {
+    const version = file.split('__')[0];
+    if (applied.has(version)) continue;
+    const sql = (await import('fs')).readFileSync(join(MIGRATIONS_DIR, file), 'utf-8');
+    const statements = sql.split(';').map(s => s.trim()).filter(s => s.length > 0);
+    for (const stmt of statements) {
+      await db.run(stmt);
+    }
+    await db.run('INSERT INTO schema_migrations (version) VALUES (?)', [version]);
+  }
+}
 
 function splitStatements(sql: string): string[] {
   return sql
@@ -9,6 +41,7 @@ function splitStatements(sql: string): string[] {
 
 export async function initializeDatabase(path: string): Promise<SQLiteConnection> {
   const conn = await SQLiteConnection.open(path);
+  await applyMigrations(conn);
   for (const sql of splitStatements(SCHEMA)) {
     await conn.run(sql);
   }
