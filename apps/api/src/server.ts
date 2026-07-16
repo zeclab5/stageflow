@@ -8,3 +8,8 @@ createApp()
     console.error('Failed to start API server', error);
     process.exit(1);
   });
+
+process.on('unhandledRejection', (reason) => { console.error('API unhandledRejection', reason); });
+process.on('uncaughtException', (error) => { console.error('API uncaughtException', error); process.exit(1); });
+process.on('SIGTERM', () => process.exit(0));
+process.on('SIGINT', () => process.exit(0));

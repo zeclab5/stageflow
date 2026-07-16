@@ -7,6 +7,11 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 const SELF = 'http://localhost:' + PORT;
 const API_BASE = process.env.API_BASE || SELF;
 
+process.on('unhandledRejection', (reason) => { console.error('Web unhandledRejection', reason); });
+process.on('uncaughtException', (error) => { console.error('Web uncaughtException', error); process.exit(1); });
+process.on('SIGTERM', () => process.exit(0));
+process.on('SIGINT', () => process.exit(0));
+
 app.use(express.static('public'));
 
 const layout = (title: string, body: string) => `<!doctype html>
