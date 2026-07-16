@@ -83,6 +83,36 @@ describe('API integration', () => {
     expect(response.body).toHaveProperty('manifests');
     expect(response.body).toHaveProperty('loaded');
   });
+
+  it('GET /scenes returns list', async () => {
+    const response = await request(app).get('/scenes').set('x-api-key', 'test-api-key');
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
+
+  it('GET /prompts returns list', async () => {
+    const response = await request(app).get('/prompts').set('x-api-key', 'test-api-key');
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
+
+  it('GET /assets returns list', async () => {
+    const response = await request(app).get('/assets').set('x-api-key', 'test-api-key');
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
+
+  it('GET /generations returns list', async () => {
+    const response = await request(app).get('/generations').set('x-api-key', 'test-api-key');
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
+
+  it('GET /integrations returns list', async () => {
+    const response = await request(app).get('/integrations').set('x-api-key', 'test-api-key');
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
 });
 
 describe('API auth', () => {
