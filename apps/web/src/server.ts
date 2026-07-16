@@ -33,6 +33,7 @@ const layout = (title: string, body: string) => `<!doctype html>
         <a href="/scenes">Scenes</a>
         <a href="/screens">Screens</a>
         <a href="/show-flow">Show Flow</a>
+        <a href="/cues">Cues</a>
         <a href="/library">Library</a>
         <a href="/works">Works</a>
         <a href="/blog">Blog</a>
@@ -408,6 +409,77 @@ app.get('/show-flow', async (_req, res) => {
           activeSceneId = prev.id;
           await activate(prev.id);
         });
+        await load();
+      })();
+    </script>
+  `));
+});
+
+app.get('/cues', async (_req, res) => {
+  const response = await fetch(`${API_BASE}/projects`);
+  const projects = await response.json();
+  res.send(layout('Cues', `
+    <section class="card">
+      <h2>Cues</h2>
+      <select id="cue-scene" style="padding:8px 12px;"></select>
+      <button id="add-cue" style="padding:8px 12px;margin-left:8px;">Add Cue</button>
+      <ul id="cue-list" style="list-style:none;padding:0;margin-top:12px;"></ul>
+    </section>
+    <script>
+      (async () => {
+        const listEl = document.getElementById('cue-list');
+        const sceneEl = document.getElementById('cue-scene');
+        const projects = ${JSON.stringify(projects)};
+        const projectId = projects[0]?.id;
+        if (!projectId) {
+          listEl.innerHTML = '<li class="muted">Create a project first.</li>';
+          return;
+        }
+        const sceneRes = await fetch('${API_BASE}/scenes?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
+        const scenes = await sceneRes.json();
+        sceneEl.innerHTML = scenes.map((s: any) => '<option value="' + s.id + '">' + s.name + '</option>').join('');
+        async function load() {
+          const res = await fetch('${API_BASE}/cues?sceneId=' + encodeURIComponent(sceneEl.value), { headers: { 'x-api-key': 'test-api-key' } });
+          const cues = await res.json();
+          listEl.innerHTML = '';
+          for (const cue of cues) {
+            const li = document.createElement('li');
+            li.className = 'card';
+            li.draggable = true;
+            li.dataset.id = cue.id;
+            li.textContent = cue.name + ' (' + cue.timelinePosition + ')';
+            li.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', cue.id); });
+            li.addEventListener('dragover', (e) => e.preventDefault());
+            li.addEventListener('drop', async (e) => {
+              const draggedId = e.dataTransfer.getData('text/plain');
+              if (draggedId === cue.id) return;
+              const all = await fetch('${API_BASE}/cues?sceneId=' + encodeURIComponent(sceneEl.value), { headers: { 'x-api-key': 'test-api-key' } }).then(r => r.json());
+              const fromIdx = all.findIndex((c: any) => c.id === draggedId);
+              const toIdx = all.findIndex((c: any) => c.id === cue.id);
+              if (fromIdx < 0 || toIdx < 0) return;
+              const moved = all.splice(fromIdx, 1)[0];
+              all.splice(toIdx, 0, moved);
+              for (let i = 0; i < all.length; i++) {
+                await fetch('${API_BASE}/cues/' + encodeURIComponent(all[i].id) + '/reorder', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
+                  body: JSON.stringify({ timelinePosition: i + 1 })
+                });
+              }
+              load();
+            });
+            listEl.appendChild(li);
+          }
+        }
+        document.getElementById('add-cue').addEventListener('click', async () => {
+          await fetch('${API_BASE}/cues', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
+            body: JSON.stringify({ sceneId: sceneEl.value, name: 'Cue ' + (listEl.children.length + 1), timelinePosition: listEl.children.length + 1 })
+          });
+          load();
+        });
+        sceneEl.addEventListener('change', load);
         await load();
       })();
     </script>
