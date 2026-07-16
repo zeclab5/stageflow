@@ -15,11 +15,18 @@ export async function bootstrapContainer() {
   if (bootstrapped) return;
   bootstrapped = true;
 
-  if (existsSync('/tmp/stageflow-api.sqlite')) {
-    unlinkSync('/tmp/stageflow-api.sqlite');
+  const defaultPath = '/tmp/stageflow-api.sqlite';
+  const fallbackPath = '/tmp/stageflow-api-' + process.pid + '.sqlite';
+  let dbPath = defaultPath;
+  try {
+    if (existsSync(defaultPath)) {
+      unlinkSync(defaultPath);
+    }
+    await initializeDatabase(defaultPath);
+  } catch {
+    dbPath = fallbackPath;
   }
-
-  const db = await initializeDatabase('/tmp/stageflow-api.sqlite');
+  const db = await initializeDatabase(dbPath);
 
   const projectRepo = new SQLiteProjectRepository(db);
   const sceneRepo = new SQLiteSceneRepository(db);
