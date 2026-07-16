@@ -46,7 +46,7 @@ export { SQLiteAssetPipelineRunRepository } from './infrastructure/repository/SQ
 
 export { SQLiteConnection } from './infrastructure/persistence/sqlite/SQLiteConnection';
 export { initializeDatabase } from './infrastructure/persistence/sqlite/SQLiteProvider';
-export { EventBus } from './infrastructure/event/EventBus';
+export { EventBus, eventBus } from './infrastructure/event/EventBus';
 
 export {
   ProjectService,
