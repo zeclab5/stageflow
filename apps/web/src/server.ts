@@ -514,6 +514,7 @@ app.get('/show-flow', async (_req, res) => {
       </div>
       <div id="preview-grid" style="position:relative;width:100%;background:#0b1220;border-radius:12px;overflow:hidden;border:1px solid #1f2937;margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;padding:12px;"></div>
       <pre id="current-scene" class="muted" style="margin-top:12px;">No active scene.</pre>
+      <pre id="trigger-status" class="muted" style="margin-top:8px;">Trigger result: idle</pre>
       <ul id="scene-list" style="list-style:none;padding:0;margin-top:12px;"></ul>
       <ul id="cue-list" style="list-style:none;padding:0;margin-top:12px;"></ul>
     </section>
@@ -523,6 +524,7 @@ app.get('/show-flow', async (_req, res) => {
         const cueListEl = document.getElementById('cue-list');
         const statusEl = document.getElementById('current-status');
         const currentEl = document.getElementById('current-scene');
+        const triggerStatus = document.getElementById('trigger-status');
         const projectEl = document.getElementById('project-id');
         const projects = ${JSON.stringify(projects)};
         const projectId = projects[0]?.id || 'p1';
@@ -648,7 +650,20 @@ app.get('/show-flow', async (_req, res) => {
           await load();
         }
         async function triggerCue(id) {
-          await fetch('${API_BASE}/api/playback/cues/' + encodeURIComponent(id) + '/trigger', { method: 'POST', headers: { 'x-api-key': 'test-api-key' } });
+          try {
+            const r = await fetch('${API_BASE}/api/playback/cues/' + encodeURIComponent(id) + '/trigger', { method: 'POST', headers: { 'x-api-key': 'test-api-key' } });
+            const json = await r.json();
+            if (r.ok) {
+              triggerStatus.textContent = 'Triggered: ' + (json.cue?.name ?? id) + ' -> scene=' + (json.targetScene?.name ?? json.scene?.name ?? 'unknown');
+              triggerStatus.style.color = '#e5e7eb';
+            } else {
+              triggerStatus.textContent = 'Trigger failed: ' + (json.error || r.status);
+              triggerStatus.style.color = '#fca5a5';
+            }
+          } catch (e: any) {
+            triggerStatus.textContent = 'Trigger error: ' + e.message;
+            triggerStatus.style.color = '#fca5a5';
+          }
           await load();
         }
         document.getElementById('reload').addEventListener('click', load);
