@@ -72,4 +72,15 @@ CREATE TABLE IF NOT EXISTS cues (
   timeline_position REAL NOT NULL DEFAULT 0,
   status TEXT NOT NULL DEFAULT 'pending'
 );
+
+CREATE TABLE IF NOT EXISTS screens (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  resolution TEXT NOT NULL DEFAULT '{}',
+  description TEXT NOT NULL DEFAULT '',
+  enabled INTEGER NOT NULL DEFAULT 1,
+  "order" INTEGER NOT NULL DEFAULT 0
+);
 `;

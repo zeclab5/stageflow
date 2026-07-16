@@ -13,8 +13,8 @@ export class CueService {
     return new RenameCue(this.repo).execute(id, name);
   }
 
-  async reorder(id: string, order: number) {
-    return new ReorderCue(this.repo).execute(id, order);
+  async reorder(id: string, timelinePosition: number) {
+    return new ReorderCue(this.repo).execute(id, timelinePosition);
   }
 
   async remove(id: string) {

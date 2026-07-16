@@ -1,6 +1,6 @@
 import { DIContainer } from 'stageflow-core';
-import { SQLiteProjectRepository, SQLiteSceneRepository, SQLitePromptRepository, SQLiteAssetRepository, SQLiteGenerationJobRepository, SQLiteIntegrationRepository, SQLiteCueRepository } from 'stageflow-core';
-import { ProjectService, SceneService, PromptService, AssetService, GenerationService, IntegrationService, CueService } from 'stageflow-core';
+import { SQLiteProjectRepository, SQLiteSceneRepository, SQLitePromptRepository, SQLiteAssetRepository, SQLiteGenerationJobRepository, SQLiteIntegrationRepository, SQLiteCueRepository, SQLiteScreenRepository } from 'stageflow-core';
+import { ProjectService, SceneService, PromptService, AssetService, GenerationService, IntegrationService, CueService, ScreenService } from 'stageflow-core';
 import { PluginRegistry } from 'stageflow-core';
 import { healthPluginDescriptor } from './plugins/HealthPlugin';
 import { initializeDatabase } from 'stageflow-core';
@@ -23,6 +23,7 @@ export async function bootstrapContainer() {
   const generationRepo = new SQLiteGenerationJobRepository(db);
   const integrationRepo = new SQLiteIntegrationRepository(db);
   const cueRepo = new SQLiteCueRepository(db);
+  const screenRepo = new SQLiteScreenRepository(db);
 
   container.register('ProjectService', () => new ProjectService(projectRepo));
   container.register('SceneService', () => new SceneService(sceneRepo));
@@ -31,6 +32,7 @@ export async function bootstrapContainer() {
   container.register('GenerationService', () => new GenerationService(generationRepo));
   container.register('IntegrationService', () => new IntegrationService(integrationRepo));
   container.register('CueService', () => new CueService(cueRepo));
+  container.register('ScreenService', () => new ScreenService(screenRepo));
 
   pluginRegistry.registerDescriptor(healthPluginDescriptor);
   await pluginRegistry.load('health');

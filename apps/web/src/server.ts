@@ -106,6 +106,63 @@ app.get('/scenes', async (_req, res) => {
   `));
 });
 
+app.get('/screens', async (_req, res) => {
+  const response = await fetch(`${API_BASE}/projects`);
+  const projects = await response.json();
+  res.send(layout('Screens', `
+    <section class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h2>Screens</h2>
+        <button id="new-screen" style="padding:8px 14px;">New Screen</button>
+      </div>
+      <ul id="screen-list" style="list-style:none;padding:0;margin-top:12px;"></ul>
+    </section>
+    <section class="card">
+      <h2>Screen Properties</h2>
+      <pre id="screen-detail" class="muted">Select a screen.</pre>
+    </section>
+    <script>
+      (async () => {
+        const listEl = document.getElementById('screen-list');
+        const detailEl = document.getElementById('screen-detail');
+        const projects = ${JSON.stringify(projects)};
+        const projectId = projects[0]?.id;
+        if (!projectId) {
+          detailEl.textContent = 'Create a project first.';
+          return;
+        }
+        document.getElementById('new-screen').addEventListener('click', async () => {
+          await fetch('${API_BASE}/screens?projectId=' + encodeURIComponent(projectId), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
+            body: JSON.stringify({ name: 'Screen ' + (listEl.children.length + 1), type: 'Projection', resolution: { width: 1920, height: 1080 }, order: listEl.children.length + 1 })
+          });
+          detailEl.textContent = '';
+          load();
+        });
+        async function load() {
+          const res = await fetch('${API_BASE}/screens?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
+          const screens = await res.json();
+          listEl.innerHTML = '';
+          for (const screen of screens) {
+            const li = document.createElement('li');
+            li.className = 'card';
+            li.textContent = screen.name;
+            li.style.cursor = 'pointer';
+            li.addEventListener('click', async () => {
+              const r = await fetch('${API_BASE}/screens/' + screen.id, { headers: { 'x-api-key': 'test-api-key' } });
+              const data = await r.json();
+              detailEl.textContent = JSON.stringify(data, null, 2);
+            });
+            listEl.appendChild(li);
+          }
+        }
+        await load();
+      })();
+    </script>
+  `));
+});
+
 app.get('/works', async (_req, res) => {
   const response = await fetch(`${API_BASE}/api/works`);
   const data = await response.json();

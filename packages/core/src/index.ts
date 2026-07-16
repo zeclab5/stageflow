@@ -38,6 +38,7 @@ export { SQLiteAssetRepository } from './infrastructure/repository/SQLiteAssetRe
 export { SQLiteGenerationJobRepository } from './infrastructure/repository/SQLiteGenerationJobRepository';
 export { SQLiteIntegrationRepository } from './infrastructure/repository/SQLiteIntegrationRepository';
 export { SQLiteCueRepository } from './infrastructure/repository/SQLiteCueRepository';
+export { SQLiteScreenRepository } from './infrastructure/repository/SQLiteScreenRepository';
 
 export { SQLiteConnection } from './infrastructure/persistence/sqlite/SQLiteConnection';
 export { initializeDatabase } from './infrastructure/persistence/sqlite/SQLiteProvider';
@@ -50,5 +51,6 @@ export {
   AssetService,
   GenerationService,
   IntegrationService,
-  CueService
+  CueService,
+  ScreenService
 } from './application/service';

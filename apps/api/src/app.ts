@@ -8,6 +8,7 @@ import { IntegrationRouter } from './routes/IntegrationRouter';
 import { PluginsRouter } from './routes/PluginsRouter';
 import { WorksRouter, BlogRouter } from './routes/ContentRouter';
 import { CueRouter } from './routes/CueRouter';
+import { ScreenRouter } from './routes/ScreenRouter';
 import { bootstrapContainer } from './container';
 import { requiredApiKey } from './auth';
 import { errorHandler } from './errors';
@@ -25,6 +26,7 @@ export async function createApp() {
   app.use('/generations', GenerationRouter);
   app.use('/integrations', IntegrationRouter);
   app.use('/cues', CueRouter);
+  app.use('/screens', ScreenRouter);
   app.use('/api/plugins', PluginsRouter);
   app.use('/api/works', WorksRouter);
   app.use('/api/blog', BlogRouter);
