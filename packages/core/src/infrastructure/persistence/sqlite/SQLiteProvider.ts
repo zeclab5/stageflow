@@ -64,4 +64,12 @@ CREATE TABLE IF NOT EXISTS integrations (
   config TEXT NOT NULL DEFAULT '{}',
   status TEXT NOT NULL DEFAULT 'draft'
 );
+
+CREATE TABLE IF NOT EXISTS cues (
+  id TEXT PRIMARY KEY,
+  scene_id TEXT NOT NULL REFERENCES scenes(id),
+  name TEXT NOT NULL,
+  timeline_position REAL NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'pending'
+);
 `;

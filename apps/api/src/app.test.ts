@@ -151,3 +151,73 @@ describe('API auth', () => {
     expect(response.body).toMatchObject({ error: 'unauthorized' });
   });
 });
+
+describe('API cues', () => {
+  let app: Awaited<ReturnType<typeof createApp>>;
+  let projectId: string;
+  let sceneId: string;
+
+  beforeAll(async () => {
+    process.env.API_KEY = 'test-api-key';
+    app = await createApp();
+
+    const project = await request(app)
+      .post('/projects')
+      .set('x-api-key', 'test-api-key')
+      .send({ name: 'Cue Test Project' });
+    projectId = project.body.id;
+
+    const scene = await request(app)
+      .post('/scenes?projectId=' + encodeURIComponent(projectId))
+      .set('x-api-key', 'test-api-key')
+      .send({ name: 'Scene 1', order: 1 });
+    sceneId = scene.body.id;
+  });
+
+  afterAll(() => {
+    delete process.env.API_KEY;
+  });
+
+  it('POST /cues creates cue', async () => {
+    const response = await request(app)
+      .post('/cues')
+      .set('x-api-key', 'test-api-key')
+      .send({ sceneId, name: 'Intro', timelinePosition: 1 });
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ sceneId, name: 'Intro', status: 'pending' });
+  });
+
+  it('GET /cues returns cues for scene', async () => {
+    const response = await request(app)
+      .get('/cues')
+      .set('x-api-key', 'test-api-key')
+      .query({ sceneId });
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
+
+  it('PATCH /cues/:id renames cue', async () => {
+    const cue = await request(app)
+      .post('/cues')
+      .set('x-api-key', 'test-api-key')
+      .send({ sceneId, name: 'Rename Me', timelinePosition: 2 });
+    const response = await request(app)
+      .patch(`/cues/${cue.body.id}`)
+      .set('x-api-key', 'test-api-key')
+      .send({ name: 'Renamed' });
+    expect(response.status).toBe(200);
+    expect(response.body.name).toBe('Renamed');
+  });
+
+  it('DELETE /cues/:id removes cue', async () => {
+    const cue = await request(app)
+      .post('/cues')
+      .set('x-api-key', 'test-api-key')
+      .send({ sceneId, name: 'Delete Me', timelinePosition: 3 });
+    const response = await request(app)
+      .delete(`/cues/${cue.body.id}`)
+      .set('x-api-key', 'test-api-key');
+    expect(response.status).toBe(200);
+    expect(response.body.id).toBe(cue.body.id);
+  });
+});
