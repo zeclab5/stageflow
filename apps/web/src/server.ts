@@ -2,6 +2,7 @@ import express from 'express';
 
 const app = express();
 export { app };
+export default app;
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 const API_BASE = process.env.API_BASE || 'http://localhost:3101';
 
