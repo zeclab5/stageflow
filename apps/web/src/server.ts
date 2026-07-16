@@ -378,9 +378,20 @@ app.get('/screens', async (_req, res) => {
 });
 
 app.get('/library', async (_req, res) => {
-  const response = await fetch(`${API_BASE}/projects`);
-  const projects = await response.json();
+  const projectRes = await fetch(`${API_BASE}/projects`);
+  const projects = await projectRes.json();
+  const projectId = projects[0]?.id || 'p1';
+  const runsRes = await fetch(`${API_BASE}/api/pipeline/runs?projectId=${encodeURIComponent(projectId)}`, { headers: { 'x-api-key': 'test-api-key' } });
+  const runs = await runsRes.json();
   res.send(layout('Library', `
+    <section class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h2>Asset Pipeline</h2>
+        <button id="run-pipeline" style="padding:8px 14px;">Run Pipeline</button>
+      </div>
+      <pre id="pipeline-status" class="muted" style="margin-top:12px;">Idle</pre>
+      <pre id="pipeline-output" style="margin-top:12px;">${JSON.stringify(runs, null, 2)}</pre>
+    </section>
     <section class="card">
       <h2>Project Library</h2>
       <input id="asset-name" placeholder="Asset name" />
@@ -400,8 +411,7 @@ app.get('/library', async (_req, res) => {
     <script>
       (async () => {
         const listEl = document.getElementById('asset-list');
-        const projects = ${JSON.stringify(projects)};
-        const projectId = projects[0]?.id;
+        const projectId = '${projectId}';
         if (!projectId) {
           listEl.innerHTML = '<li class="muted">Create a project first.</li>';
           return;
@@ -417,9 +427,9 @@ app.get('/library', async (_req, res) => {
           });
           document.getElementById('asset-name').value = '';
           document.getElementById('asset-uri').value = '';
-          load();
+          loadAssets();
         });
-        async function load() {
+        async function loadAssets() {
           const res = await fetch('${API_BASE}/assets?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
           const assets = await res.json();
           listEl.innerHTML = '';
@@ -430,7 +440,24 @@ app.get('/library', async (_req, res) => {
             listEl.appendChild(li);
           }
         }
-        await load();
+        document.getElementById('run-pipeline').addEventListener('click', async () => {
+          const statusEl = document.getElementById('pipeline-status');
+          const outputEl = document.getElementById('pipeline-output');
+          statusEl.textContent = 'Running...';
+          try {
+            const r = await fetch('${API_BASE}/api/pipeline/run', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
+              body: JSON.stringify({ projectId: '${projectId}' })
+            });
+            const json = await r.json();
+            outputEl.textContent = JSON.stringify(json, null, 2);
+            statusEl.textContent = 'Completed ' + new Date().toLocaleTimeString();
+          } catch (e) {
+            statusEl.textContent = 'Error: ' + e.message;
+          }
+        });
+        await loadAssets();
       })();
     </script>
   `));
@@ -821,43 +848,7 @@ app.get('/inspector', async (_req, res) => {
   `));
 });
 
-app.get('/library', async (_req, res) => {
-  try {
-    const response = await fetch(`${API_BASE}/api/pipeline/runs?projectId=p1`, { headers: { 'x-api-key': 'test-api-key' } });
-    const data = await response.json();
-    res.send(layout('Library', `
-      <section class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <h2>Asset Pipeline</h2>
-          <button id="run-pipeline" style="padding:8px 14px;">Run Pipeline</button>
-        </div>
-        <pre id="pipeline-status" class="muted" style="margin-top:12px;">Idle</pre>
-        <pre id="pipeline-output" style="margin-top:12px;">${JSON.stringify(data, null, 2)}</pre>
-      </section>
-      <script>
-        document.getElementById('run-pipeline').addEventListener('click', async () => {
-          const statusEl = document.getElementById('pipeline-status');
-          const outputEl = document.getElementById('pipeline-output');
-          statusEl.textContent = 'Running...';
-          try {
-            const r = await fetch('${API_BASE}/api/pipeline/run', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
-              body: JSON.stringify({ projectId: 'p1', root: '${process.cwd()}/public/content' })
-            });
-            const json = await r.json();
-            outputEl.textContent = JSON.stringify(json, null, 2);
-            statusEl.textContent = 'Completed ' + new Date().toLocaleTimeString();
-          } catch (e) {
-            statusEl.textContent = 'Error: ' + e.message;
-          }
-        });
-      </script>
-    `));
-  } catch (e) {
-    res.send(layout('Library', `<section class="card"><h2>Library</h2><p class="muted">${String(e)}</p></section>`));
-  }
-});
+
 
 app.get('/works', async (_req, res) => {
   const response = await fetch(`${API_BASE}/api/works`);
