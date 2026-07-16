@@ -38,6 +38,7 @@ const layout = (title: string, body: string) => `<!doctype html>
         <a href="/works">Works</a>
         <a href="/blog">Blog</a>
         <a href="/plugins">Plugins</a>
+        <a href="/inspector">Inspector</a>
       </nav>
     </header>
     <main>${body}</main>
@@ -510,6 +511,42 @@ app.get('/cues', async (_req, res) => {
         });
         sceneEl.addEventListener('change', load);
         await load();
+      })();
+    </script>
+  `));
+});
+
+app.get('/inspector', async (_req, res) => {
+  const kind = (_req.query.kind as string) || '';
+  const id = (_req.query.id as string) || '';
+  res.send(layout('Inspector', `
+    <section class="card">
+      <h2>Inspector</h2>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input id="inspector-kind" placeholder="kind: project/scene/asset" value="${kind}" style="padding:8px 12px;" />
+        <input id="inspector-id" placeholder="id" value="${id}" style="padding:8px 12px;" />
+        <button id="inspect" style="padding:8px 12px;">Inspect</button>
+      </div>
+      <pre id="inspector-result" class="muted" style="margin-top:12px;">Select kind and id.</pre>
+    </section>
+    <script>
+      (async () => {
+        const kindEl = document.getElementById('inspector-kind');
+        const idEl = document.getElementById('inspector-id');
+        const resultEl = document.getElementById('inspector-result');
+        async function run() {
+          const kind = kindEl.value.trim();
+          const id = idEl.value.trim();
+          if (!kind || !id) {
+            resultEl.textContent = 'kind and id required';
+            return;
+          }
+          const r = await fetch('${API_BASE}/inspector/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id), { headers: { 'x-api-key': 'test-api-key' } });
+          const data = await r.json();
+          resultEl.textContent = JSON.stringify(data, null, 2);
+        }
+        document.getElementById('inspect').addEventListener('click', run);
+        if ('${kind}' && '${id}') await run();
       })();
     </script>
   `));
