@@ -15,8 +15,8 @@ function assertAssetType(value: string): AssetType {
 export class AssetService {
   constructor(private readonly repo: AssetRepository) {}
 
-  async register(projectId: string, type: string, uri: string) {
-    return new RegisterAsset(this.repo).execute(projectId, assertAssetType(type), uri);
+  async register(projectId: string, type: string, name: string, uri: string, description?: string, tags?: string[], size?: number) {
+    return new RegisterAsset(this.repo).execute(projectId, name, assertAssetType(type), uri, description, tags, size);
   }
 
   async retire(id: string) {

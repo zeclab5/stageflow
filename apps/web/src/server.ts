@@ -31,6 +31,8 @@ const layout = (title: string, body: string) => `<!doctype html>
       <nav>
         <a href="/">Home</a>
         <a href="/scenes">Scenes</a>
+        <a href="/screens">Screens</a>
+        <a href="/library">Library</a>
         <a href="/works">Works</a>
         <a href="/blog">Blog</a>
         <a href="/plugins">Plugins</a>
@@ -154,6 +156,65 @@ app.get('/screens', async (_req, res) => {
               const data = await r.json();
               detailEl.textContent = JSON.stringify(data, null, 2);
             });
+            listEl.appendChild(li);
+          }
+        }
+        await load();
+      })();
+    </script>
+  `));
+});
+
+app.get('/library', async (_req, res) => {
+  const response = await fetch(`${API_BASE}/projects`);
+  const projects = await response.json();
+  res.send(layout('Library', `
+    <section class="card">
+      <h2>Project Library</h2>
+      <input id="asset-name" placeholder="Asset name" />
+      <select id="asset-type">
+        <option value="image">Image</option>
+        <option value="video">Video</option>
+        <option value="audio">Audio</option>
+        <option value="text">Text</option>
+      </select>
+      <input id="asset-uri" placeholder="URI or path" />
+      <button id="register-asset" style="margin-left:8px;">Add</button>
+    </section>
+    <section class="card">
+      <h2>Assets</h2>
+      <ul id="asset-list" style="list-style:none;padding:0;margin-top:12px;"></ul>
+    </section>
+    <script>
+      (async () => {
+        const listEl = document.getElementById('asset-list');
+        const projects = ${JSON.stringify(projects)};
+        const projectId = projects[0]?.id;
+        if (!projectId) {
+          listEl.innerHTML = '<li class="muted">Create a project first.</li>';
+          return;
+        }
+        document.getElementById('register-asset').addEventListener('click', async () => {
+          const name = document.getElementById('asset-name').value || 'Untitled';
+          const type = document.getElementById('asset-type').value;
+          const uri = document.getElementById('asset-uri').value || '/tmp/asset';
+          await fetch('${API_BASE}/assets?projectId=' + encodeURIComponent(projectId), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-api-key' },
+            body: JSON.stringify({ name, type, uri })
+          });
+          document.getElementById('asset-name').value = '';
+          document.getElementById('asset-uri').value = '';
+          load();
+        });
+        async function load() {
+          const res = await fetch('${API_BASE}/assets?projectId=' + encodeURIComponent(projectId), { headers: { 'x-api-key': 'test-api-key' } });
+          const assets = await res.json();
+          listEl.innerHTML = '';
+          for (const asset of assets) {
+            const li = document.createElement('li');
+            li.className = 'card';
+            li.innerHTML = '<strong>' + asset.name + '</strong> <span class="muted">' + asset.type + '</span>';
             listEl.appendChild(li);
           }
         }

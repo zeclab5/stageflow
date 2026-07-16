@@ -8,12 +8,16 @@ export class RegisterAsset {
     private readonly eventBus?: EventBus
   ) {}
 
-  async execute(projectId: ProjectId, type: AssetType, uri: string): Promise<Asset> {
+  async execute(projectId: ProjectId, name: string, type: AssetType, uri: string, description?: string, tags?: string[], size?: number): Promise<Asset> {
     const asset = new Asset({
       id: crypto.randomUUID(),
       projectId,
+      name,
       type,
-      uri
+      uri,
+      description,
+      tags,
+      size
     });
     await this.repo.save(asset);
 
@@ -38,20 +42,17 @@ export class RetireAsset {
     private readonly eventBus?: EventBus
   ) {}
 
-  async execute(id: AssetId): Promise<Asset> {
+  async execute(id: AssetId): Promise<void> {
     const asset = await this.repo.findById(id);
     if (!asset) throw new Error('asset not found');
-    const retired = new Asset({ ...asset });
-    await this.repo.save(retired);
+    await this.repo.delete(id);
 
     if (this.eventBus) {
       await this.eventBus.publish({
         eventType: 'AssetRetired',
-        assetId: retired.id,
+        assetId: id,
         occurredAt: new Date()
       } as AssetRetiredEvent);
     }
-
-    return retired;
   }
 }
