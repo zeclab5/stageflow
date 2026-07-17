@@ -1,0 +1,20 @@
+{
+  "name": "@stageflow/<plugin>",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "stageflowPlugin": {
+    "entry": "dist/index.js",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "category": "integration"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch"
+  },
+  "dependencies": {
+    "stageflow-core": "*"
+  }
+}

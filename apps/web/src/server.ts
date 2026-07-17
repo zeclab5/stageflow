@@ -1105,17 +1105,40 @@ app.get('/blog/:slug', async (req, res) => {
 app.get('/plugins', async (_req, res) => {
   const response = await fetch(`${API_BASE}/api/plugins`);
   const data = await response.json();
+  const discoveredRows = (data.discovered ?? []).map((item: {name?: string; version?: string; category?: string}) => `<li><a href="/plugins/docs/${escape(item.name ?? "")}">${escape(item.name ?? "")}</a>: ${escape(item.version ?? '0.0.0')} ${escape(item.category ?? 'integration')}</li>`).join('');
+  const manifestsRows = (data.manifests ?? []).map((item: {name?: string; version?: string; category?: string}) => `<li>${escape(item.name ?? "")} ${escape(item.version ?? '')} ${escape(item.category ?? '')}</li>`).join('');
+  const loadedRows = (data.loaded ?? []).map((item: {name?: string; version?: string; category?: string}) => `<li>${escape(item.name ?? "")}</li>`).join('');
   res.send(layout('Plugins', `
     <section class="card">
+      <h2>Discovered</h2>
+      <ul style="list-style:none;padding:0;margin-top:12px;">${discoveredRows || '<li class="muted">none</li>'}</ul>
+    </section>
+    <section class="card">
       <h2>Manifests</h2>
-      <pre>${JSON.stringify(data.manifests ?? [], null, 2)}</pre>
+      <ul style="list-style:none;padding:0;margin-top:12px;">${manifestsRows || '<li class="muted">none</li>'}</ul>
     </section>
     <section class="card">
       <h2>Loaded</h2>
-      <pre>${JSON.stringify(data.loaded ?? [], null, 2)}</pre>
+      <ul style="list-style:none;padding:0;margin-top:12px;">${loadedRows || '<li class="muted">none</li>'}</ul>
     </section>
   `));
 });
+
+app.get('/plugins/docs/:slug?', async (req, res) => {
+  const slug = escape(req.params.slug || 'scaffold');
+  const response = await fetch(`${API_BASE}/api/plugins`);
+  const data = await response.json();
+  interface PluginMeta {
+    name?: string;
+  }
+  const plugin = (data.discovered ?? []).find((item: PluginMeta) => item.name === slug) || (data.manifests ?? []).find((item: PluginMeta) => item.name === slug);
+  const body = plugin ? `<pre>${escape(JSON.stringify(plugin, null, 2))}</pre><p class="muted">Use <code>POST /plugins/${escape(slug)}/activate</code> to activate.</p>` : `<p class="muted">Plugin not found: ${slug}</p><a href="/plugins">Back to plugins</a>`;
+  res.send(layout('Plugin ' + slug, body));
+});
+
+function escape(input: string): string {
+  return input.replace(/[&<>"']/g, (match) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[match] ?? match);
+}
 
 app.use((_req, res) => res.status(404).send(layout('Not found', '<p>Not found</p>')));
 

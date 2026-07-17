@@ -35,6 +35,7 @@ AI 협업 플랫폼.
 
 ## Vercel 배포
 
+### Web (Vercel)
 1. [Vercel Dashboard](https://vercel.com/new)에서 GitHub 저장소 `zeclab5/stageflow` Import
 2. Project Settings
    - Root Directory: `.`
@@ -42,12 +43,17 @@ AI 협업 플랫폼.
    - Build Command: `npm run build`
    - Install Command: `npm install`
 3. Environment Variables 등록:
-   - `API_KEY`
-   - `RESOLUME_HOST`
-   - `RESOLUME_PORT`
+   - `API_BASE`: 배포된 API 서버 주소. 예: `https://stageflow-api.zeclab.net`
+   - `API_KEY`: API 키
 4. Deploy 클릭 -> 도메인 확인 -> Preview URL 확인
-5. Production 배포: main 브랜치 머지 또는 Redeploy
-6. If Preview URL returns 302 or page looks empty: confirm `vercel.json` `routes` point to `apps/web/src/server.ts` and re-deploy
+
+### API (별도 배포)
+API 서버는 별도로 배포:
+- Render/Railway/Fly.io 등 Node.js 호스팅 사용
+- 포트: `3101`
+- 명령: `cd apps/api && PORT=3101 node dist/server.js`
+- Root Directory: StageFlow 루트로 지정하고 빌드 본체만 배포
+- 환경변수: `API_KEY` 등록
 
 로컬 실행:
 - API: `cd apps/api && PORT=3101 node dist/server.js`
