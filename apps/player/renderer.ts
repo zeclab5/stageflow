@@ -1,10 +1,29 @@
-const fileInput = document.getElementById('file-input') as HTMLInputElement;
-const video = document.getElementById('video') as HTMLVideoElement;
-const playBtn = document.getElementById('play-btn') as HTMLButtonElement;
-const pauseBtn = document.getElementById('pause-btn') as HTMLButtonElement;
-const stopBtn = document.getElementById('stop-btn') as HTMLButtonElement;
-const timeEl = document.getElementById('time') as HTMLSpanElement;
-const statusEl = document.getElementById('status') as HTMLSpanElement;
+export {};
+
+declare global {
+  interface Window {
+    stageflowPlayer: {
+      open: () => Promise<{ canceled: boolean; state?: any }>;
+      play: () => Promise<any>;
+      pause: () => Promise<any>;
+      stop: () => Promise<any>;
+      seek: (seconds: number) => Promise<any>;
+      state: () => Promise<any>;
+      loadCues: (projectId: string, sceneId: string) => Promise<any[]>;
+      playCue: (index: number) => Promise<any>;
+      stopCue: () => Promise<any>;
+    };
+  }
+}
+
+const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
+const video = document.getElementById('video') as HTMLVideoElement | null;
+const playBtn = document.getElementById('play-btn') as HTMLButtonElement | null;
+const pauseBtn = document.getElementById('pause-btn') as HTMLButtonElement | null;
+const stopBtn = document.getElementById('stop-btn') as HTMLButtonElement | null;
+const openFileBtn = document.getElementById('open-file-btn') as HTMLButtonElement | null;
+const timeEl = document.getElementById('time') as HTMLSpanElement | null;
+const statusEl = document.getElementById('status') as HTMLSpanElement | null;
 
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
@@ -13,37 +32,58 @@ function formatTime(seconds: number): string {
 }
 
 function updateTime() {
+  if (!video || !timeEl) return;
   const current = formatTime(video.currentTime);
   const total = formatTime(video.duration || 0);
   timeEl.textContent = `${current} / ${total}`;
 }
 
-fileInput.addEventListener('change', async () => {
-  const file = fileInput.files?.[0];
-  if (!file) return;
-  
-  const filePath = file.path || URL.createObjectURL(file);
-  video.src = filePath;
-  statusEl.textContent = 'Loaded: ' + file.name;
+async function loadFile() {
+  const result = await window.stageflowPlayer.open();
+  if (result.canceled || !result.state?.path) return;
+  if (video) {
+    video.src = result.state.path;
+  }
+  if (statusEl) statusEl.textContent = 'Loaded';
   updateTime();
-});
+}
 
-playBtn.addEventListener('click', async () => {
+async function play() {
+  if (!video) return;
   await video.play();
-  statusEl.textContent = 'Playing';
-});
+  if (statusEl) statusEl.textContent = 'Playing';
+}
 
-pauseBtn.addEventListener('click', async () => {
+async function pause() {
+  if (!video) return;
   await video.pause();
-  statusEl.textContent = 'Paused';
-});
+  if (statusEl) statusEl.textContent = 'Paused';
+}
 
-stopBtn.addEventListener('click', () => {
+function stop() {
+  if (!video) return;
   video.pause();
   video.currentTime = 0;
-  statusEl.textContent = 'Stopped';
+  if (statusEl) statusEl.textContent = 'Stopped';
   updateTime();
-});
+}
 
-video.addEventListener('timeupdate', updateTime);
-video.addEventListener('loadedmetadata', updateTime);
+if (fileInput) {
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    if (video) video.src = URL.createObjectURL(file);
+    if (statusEl) statusEl.textContent = 'Loaded: ' + file.name;
+    updateTime();
+  });
+}
+
+if (openFileBtn) openFileBtn.addEventListener('click', loadFile);
+if (playBtn) playBtn.addEventListener('click', play);
+if (pauseBtn) pauseBtn.addEventListener('click', pause);
+if (stopBtn) stopBtn.addEventListener('click', stop);
+
+if (video) {
+  video.addEventListener('timeupdate', updateTime);
+  video.addEventListener('loadedmetadata', updateTime);
+}
