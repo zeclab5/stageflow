@@ -113,6 +113,13 @@ describe('API integration', () => {
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
   });
+
+  it('GET /projects/:id returns 404 for missing project', async () => {
+    const response = await request(app)
+      .get('/projects/__missing__')
+      .set('x-api-key', 'test-api-key');
+    expect(response.status).toBe(404);
+  });
 });
 
 describe('API auth', () => {
