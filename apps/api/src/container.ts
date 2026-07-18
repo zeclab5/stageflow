@@ -1,13 +1,24 @@
 import { existsSync, unlinkSync } from 'fs';
+import path from 'path';
 import { DIContainer, PluginRegistry, initializeDatabase, discoverPluginManifests, resolvePluginEntryPath } from 'stageflow-core';
 import { SQLiteProjectRepository, SQLiteSceneRepository, SQLitePromptRepository, SQLiteAssetRepository, SQLiteGenerationJobRepository, SQLiteIntegrationRepository, SQLiteCueRepository, SQLiteScreenRepository, SQLiteSceneObjectRepository } from 'stageflow-core';
 import { ProjectService, SceneService, PromptService, AssetService, GenerationService, IntegrationService, CueService, ScreenService, SceneObjectService } from 'stageflow-core';
 import { healthPluginDescriptor } from './plugins/HealthPlugin';
+import { spawn } from 'child_process';
 
 export const container = new DIContainer();
 export const pluginRegistry = new PluginRegistry();
 
 let bootstrapped = false;
+
+async function applyMigrations(dbPath: string) {
+  const script = path.join(__dirname, '..', '..', '..', 'scripts', 'sqlite', 'apply_migrations.py');
+  return new Promise<void>((resolve) => {
+    const child = spawn('python3', [script, dbPath], { stdio: 'ignore' });
+    child.on('error', () => resolve());
+    child.on('exit', () => resolve());
+  });
+}
 
 export async function bootstrapContainer() {
   if (bootstrapped) return;
@@ -24,6 +35,7 @@ export async function bootstrapContainer() {
   } catch {
     dbPath = fallbackPath;
   }
+  await applyMigrations(dbPath);
   const db = await initializeDatabase(dbPath);
 
   const projectRepo = new SQLiteProjectRepository(db);
