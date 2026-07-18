@@ -504,6 +504,72 @@ app.get('/screens', async (_req, res) => {
   `));
 });
 
+app.get('/resolume', async (_req, res) => {
+  const projectRes = await fetch(`${API_BASE}/projects`);
+  const projects = await projectRes.json();
+  res.send(layout('Resolume', `
+    <section class="card">
+      <h2>Resolume</h2>
+      <select id="composition" style="padding:8px 12px;"></select>
+      <button id="load-composition" style="padding:8px 12px;margin-left:8px;">Load</button>
+      <pre id="composition-status" class="muted" style="margin-top:8px;">Idle</pre>
+      <div id="layers" style="margin-top:12px;display:grid;gap:12px;"></div>
+      <div id="clips" style="margin-top:12px;display:grid;gap:12px;"></div>
+    </section>
+    <script>
+      (async () => {
+        const projects = ${JSON.stringify(projects)};
+        const projectId = projects[0]?.id || 'p1';
+        const compositionEl = document.getElementById('composition');
+        const layersEl = document.getElementById('layers');
+        const clipsEl = document.getElementById('clips');
+        const statusEl = document.getElementById('composition-status');
+        const base = '${API_BASE}';
+        const headers = { 'x-api-key': 'test-api-key' };
+        const loadCompositions = async () => {
+          const r = await fetch(base + '/api/resolume/ui/compositions', { headers });
+          const data = await r.json();
+          compositionEl.innerHTML = '';
+          const list = data.compositions || [];
+          for (const item of list) {
+            const opt = document.createElement('option');
+            opt.value = item.id;
+            opt.textContent = item.name || item.id;
+            compositionEl.appendChild(opt);
+          }
+          statusEl.textContent = 'Compositions: ' + list.length;
+        };
+        document.getElementById('load-composition').addEventListener('click', async () => {
+          statusEl.textContent = 'Loading...';
+          const compId = compositionEl.value;
+          const [layersRes, clipsRes] = await Promise.all([
+            fetch(base + '/api/resolume/ui/compositions/' + encodeURIComponent(compId) + '/layers', { headers }),
+            fetch(base + '/api/resolume/ui/compositions/' + encodeURIComponent(compId) + '/clips', { headers })
+          ]);
+          const layers = await layersRes.json();
+          const clips = await clipsRes.json();
+          layersEl.innerHTML = '';
+          clipsEl.innerHTML = '';
+          for (const layer of (layers.layers || [])) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = '<h3>' + (layer.name || layer.id) + '</h3><pre>' + JSON.stringify(layer, null, 2) + '</pre>';
+            layersEl.appendChild(card);
+          }
+          for (const clip of (clips.clips || [])) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = '<h3>' + (clip.name || clip.id) + '</h3><pre>' + JSON.stringify(clip, null, 2) + '</pre>';
+            clipsEl.appendChild(card);
+          }
+          statusEl.textContent = 'Loaded ' + (layers.layers || []).length + ' layers, ' + (clips.clips || []).length + ' clips';
+        });
+        await loadCompositions();
+      })();
+    </script>
+  `));
+});
+
 app.get('/library', async (_req, res) => {
   const projectRes = await fetch(`${API_BASE}/projects`);
   const projects = await projectRes.json();
